@@ -329,5 +329,5 @@ export async function getProductsWithStock(warehouseId: number) {
         quantity: batch.stocks[0]?.quantity || 0,
       })).filter((b) => b.quantity > 0),
     };
-  });
+  }).filter((p) => p.totalStock > 0); // Only return products with stock
 }

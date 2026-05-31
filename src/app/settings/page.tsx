@@ -1,13 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Building2, FileText, Bell, Database, Palette, Save, Sun, Moon, Upload, X } from 'lucide-react';
+import { Building2, FileText, Bell, Database, Palette, Save, Sun, Moon, Upload, X, UserCog, Plus, Trash2 } from 'lucide-react';
 import { saveOrganizationSettings } from './actions';
+import { getEmployeeRoles, createEmployeeRole, deleteEmployeeRole } from './roleActions';
 import { useTheme } from '@/components/ThemeProvider';
 
 const TABS = [
   { id: 'company', name: 'Organization Company', icon: Building2 },
   { id: 'invoice', name: 'Invoice Settings', icon: FileText },
+  { id: 'roles', name: 'Employee Roles', icon: UserCog },
   { id: 'alerts', name: 'Alert Settings', icon: Bell },
   { id: 'backup', name: 'Backup Settings', icon: Database },
   { id: 'appearance', name: 'Appearance', icon: Palette },
@@ -35,6 +37,10 @@ export default function SettingsPage() {
   const [backup, setBackup] = useState({
     path: '/backups', frequency: 'daily', time: '00:00', lastBackup: 'Never'
   });
+
+  const [roles, setRoles] = useState<any[]>([]);
+  const [newRoleName, setNewRoleName] = useState('');
+  const [isAddingRole, setIsAddingRole] = useState(false);
 
   useEffect(() => {
     async function loadSettings() {
@@ -66,6 +72,10 @@ export default function SettingsPage() {
             alertEmail: data.alertEmail || ''
           });
         }
+
+        // Load employee roles
+        const rolesData = await getEmployeeRoles();
+        setRoles(rolesData);
       } catch (err) {
         console.error('Failed to load settings', err);
       }
@@ -75,6 +85,32 @@ export default function SettingsPage() {
   }, []);
 
   const [logoFile, setLogoFile] = useState<File | null>(null);
+
+  const handleAddRole = async () => {
+    if (!newRoleName.trim()) return;
+    setIsAddingRole(true);
+    try {
+      await createEmployeeRole(newRoleName.trim());
+      const rolesData = await getEmployeeRoles();
+      setRoles(rolesData);
+      setNewRoleName('');
+    } catch (err: any) {
+      alert(err.message || 'Failed to add role');
+    } finally {
+      setIsAddingRole(false);
+    }
+  };
+
+  const handleDeleteRole = async (id: number) => {
+    if (!confirm('Are you sure you want to delete this role?')) return;
+    try {
+      await deleteEmployeeRole(id);
+      const rolesData = await getEmployeeRoles();
+      setRoles(rolesData);
+    } catch (err: any) {
+      alert(err.message || 'Failed to delete role');
+    }
+  };
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -213,6 +249,88 @@ export default function SettingsPage() {
                 <span className="text-sm text-slate-700 dark:text-slate-300">Show Logo on Invoice</span>
               </label>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ===== EMPLOYEE ROLES TAB ===== */}
+      {activeTab === 'roles' && (
+        <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-6">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h2 className="text-lg font-semibold text-slate-800 dark:text-white">Employee Roles</h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Manage custom employee roles for your organization</p>
+            </div>
+          </div>
+
+          {/* Add New Role */}
+          <div className="mb-6 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700">
+            <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Add New Role</label>
+            <div className="flex gap-2">
+              <input 
+                type="text" 
+                value={newRoleName} 
+                onChange={(e) => setNewRoleName(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && handleAddRole()}
+                placeholder="e.g., Warehouse Manager, Delivery Driver"
+                className="flex-1 px-4 py-2.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg text-sm"
+              />
+              <button 
+                onClick={handleAddRole}
+                disabled={isAddingRole || !newRoleName.trim()}
+                className="px-6 py-2.5 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
+              >
+                <Plus className="w-4 h-4" /> Add
+              </button>
+            </div>
+          </div>
+
+          {/* Roles List */}
+          <div className="space-y-2">
+            <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3">System Roles (Default)</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-6">
+              {['Admin', 'Manager', 'Cashier', 'Salesman'].map(role => (
+                <div key={role} className="flex items-center justify-between p-3 bg-slate-100 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700">
+                  <div className="flex items-center gap-2">
+                    <UserCog className="w-4 h-4 text-slate-400" />
+                    <span className="font-medium text-slate-700 dark:text-slate-300">{role}</span>
+                  </div>
+                  <span className="text-xs px-2 py-1 bg-slate-200 dark:bg-slate-800 text-slate-500 rounded">System</span>
+                </div>
+              ))}
+            </div>
+
+            {roles.length > 0 && (
+              <>
+                <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3 mt-6">Custom Roles</h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {roles.map(role => (
+                    <div key={role.id} className="flex items-center justify-between p-3 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+                      <div className="flex items-center gap-2">
+                        <UserCog className="w-4 h-4 text-teal-600" />
+                        <span className="font-medium text-slate-700 dark:text-slate-300">{role.name}</span>
+                      </div>
+                      {!role.isSystem && (
+                        <button 
+                          onClick={() => handleDeleteRole(role.id)}
+                          className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded transition-colors"
+                          title="Delete Role"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {roles.length === 0 && (
+              <div className="text-center py-8 text-slate-400 dark:text-slate-500">
+                <UserCog className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                <p className="text-sm">No custom roles added yet. Add your first custom role above.</p>
+              </div>
+            )}
           </div>
         </div>
       )}

@@ -5,6 +5,7 @@ import { Plus, Search, Filter, Eye, FileText, Printer, Download, CreditCard, Rot
 import { createSalesInvoice, getProductsWithStock } from './actions';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { SearchableProductDropdown } from '@/components/SearchableProductDropdown';
 
 interface Invoice {
   id: number;
@@ -68,7 +69,8 @@ export function SalesClient({
     salesmanId: '',
     paymentMethod: 'CASH',
     isCredit: false,
-    discount: '0'
+    discount: '0',
+    discountType: 'flat' as 'flat' | 'percentage'
   });
   
   const [products, setProducts] = useState<Product[]>(initialProducts);
@@ -141,7 +143,8 @@ export function SalesClient({
   const calculateGrossTotal = () => items.reduce((sum, item) => sum + calculateItemSubtotal(item), 0);
   const calculateNetAmount = () => {
     const gross = calculateGrossTotal();
-    const disc = parseFloat(saleData.discount) || 0;
+    const discValue = parseFloat(saleData.discount) || 0;
+    const disc = saleData.discountType === 'percentage' ? (gross * discValue) / 100 : discValue;
     return gross - disc;
   };
 
@@ -208,7 +211,8 @@ export function SalesClient({
       salesmanId: '', 
       paymentMethod: 'CASH', 
       isCredit: false,
-      discount: '0'
+      discount: '0',
+      discountType: 'flat'
     });
     setItems([]);
     setPaidAmount('0');
@@ -237,6 +241,10 @@ export function SalesClient({
 
     setIsSubmitting(true);
     try {
+      const grossTotal = calculateGrossTotal();
+      const discValue = parseFloat(saleData.discount) || 0;
+      const discountAmount = saleData.discountType === 'percentage' ? (grossTotal * discValue) / 100 : discValue;
+      
       await createSalesInvoice({
         customerId: parseInt(saleData.customerId),
         salesmanId: saleData.salesmanId ? parseInt(saleData.salesmanId) : undefined,
@@ -249,7 +257,7 @@ export function SalesClient({
           quantity: parseInt(it.quantity),
           salePrice: parseFloat(it.salePrice)
         })),
-        discount: parseFloat(saleData.discount),
+        discount: discountAmount,
         paymentMethod: saleData.paymentMethod,
         amountTendered: parseFloat(paidAmount)
       });
@@ -446,18 +454,12 @@ export function SalesClient({
                         className="hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors"
                       >
                         <td className="px-6 py-4">
-                          <select
-                            className="w-full px-4 py-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium focus:ring-2 focus:ring-indigo-500/20"
+                          <SearchableProductDropdown
+                            products={products}
                             value={item.productId}
-                            onChange={(e) => handleItemChange(item.id, 'productId', e.target.value)}
-                          >
-                            <option value="">Select Product...</option>
-                            {products.map(p => (
-                              <option key={p.id} value={p.id}>
-                                {p.name} ({p.totalStock} in stock)
-                              </option>
-                            ))}
-                          </select>
+                            onChange={(value) => handleItemChange(item.id, 'productId', value)}
+                            placeholder="Search product..."
+                          />
                         </td>
                         <td className="px-6 py-4">
                           <select
@@ -524,13 +526,24 @@ export function SalesClient({
                   <p className="text-2xl font-bold text-slate-800 dark:text-white">{symbol}{calculateGrossTotal().toFixed(2)}</p>
                 </div>
                 <div>
-                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Flat Discount</p>
-                  <input 
-                    type="number" 
-                    className="w-28 px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold" 
-                    value={saleData.discount} 
-                    onChange={(e) => setSaleData({ ...saleData, discount: e.target.value })} 
-                  />
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Discount</p>
+                  <div className="flex gap-2">
+                    <select 
+                      value={saleData.discountType} 
+                      onChange={(e) => setSaleData({ ...saleData, discountType: e.target.value as 'flat' | 'percentage' })}
+                      className="w-20 px-2 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-xs font-bold"
+                    >
+                      <option value="flat">{symbol}</option>
+                      <option value="percentage">%</option>
+                    </select>
+                    <input 
+                      type="number" 
+                      className="w-24 px-4 py-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold" 
+                      value={saleData.discount} 
+                      onChange={(e) => setSaleData({ ...saleData, discount: e.target.value })} 
+                      placeholder="0"
+                    />
+                  </div>
                 </div>
                 <div>
                   <p className="text-xs font-bold text-slate-400 uppercase tracking-widest mb-1">Net Payable</p>

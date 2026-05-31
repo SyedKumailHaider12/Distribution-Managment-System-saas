@@ -33,6 +33,7 @@ model Organization {
   salesmen Salesman[]
   categories Category[]
   employees Employee[]
+  employeeRoles EmployeeRole[]
   areas     Area[]
   batches   Batch[]
   warehouses Warehouse[]
@@ -44,6 +45,8 @@ model Organization {
   purchaseInvoiceItems PurchaseInvoiceItem[]
   salesInvoices SalesInvoice[]
   salesInvoiceItems SalesInvoiceItem[]
+  customerReturns CustomerReturn[]
+  purchaseReturns PurchaseReturn[]
   auditLogs AuditLog[]
 }
 
@@ -64,6 +67,18 @@ model Branch {
 }
 
 // === HR & STAFF MANAGEMENT ===
+model EmployeeRole {
+  id             Int      @id @default(autoincrement())
+  organizationId Int
+  name           String
+  isSystem       Boolean  @default(false)
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, name])
+}
+
 model Employee {
   id           Int      @id @default(autoincrement())
   organizationId Int
@@ -131,6 +146,8 @@ model User {
   employee     Employee?
   auditLogs    AuditLog[]
   markedAttendances Attendance[] @relation("MarkedBy")
+  processedReturns CustomerReturn[] @relation("ProcessedReturns")
+  processedPurchaseReturns PurchaseReturn[] @relation("ProcessedPurchaseReturns")
 
   @@unique([organizationId, username])
 }
@@ -207,6 +224,8 @@ model Product {
   stocks               Stock[]
   purchaseInvoiceItems PurchaseInvoiceItem[]
   salesInvoiceItems    SalesInvoiceItem[]
+  customerReturnItems  CustomerReturnItem[]
+  purchaseReturnItems  PurchaseReturnItem[]
 
   @@unique([organizationId, barcode])
 }
@@ -225,6 +244,8 @@ model Batch {
   stocks               Stock[]
   purchaseInvoiceItems PurchaseInvoiceItem[]
   salesInvoiceItems    SalesInvoiceItem[]
+  customerReturnItems  CustomerReturnItem[]
+  purchaseReturnItems  PurchaseReturnItem[]
 
   @@unique([organizationId, productId, batchNumber])
 }
@@ -385,6 +406,7 @@ model PurchaseInvoice {
   supplier     Supplier              @relation(fields: [supplierId], references: [id])
   warehouse    Warehouse             @relation(fields: [warehouseId], references: [id])
   items        PurchaseInvoiceItem[]
+  returns      PurchaseReturn[]
   
   @@unique([organizationId, invoiceNumber])
 }
@@ -428,6 +450,7 @@ model SalesInvoice {
   customer     Customer           @relation(fields: [customerId], references: [id])
   salesman     Salesman?          @relation(fields: [salesmanId], references: [id])
   items        SalesInvoiceItem[]
+  returns      CustomerReturn[]
 
   @@unique([organizationId, invoiceNumber])
 }
@@ -447,6 +470,69 @@ model SalesInvoiceItem {
   invoice      SalesInvoice   @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
   product      Product        @relation(fields: [productId], references: [id])
   batch        Batch          @relation(fields: [batchId], references: [id])
+}
+
+// === RETURNS MANAGEMENT ===
+model CustomerReturn {
+  id            Int      @id @default(autoincrement())
+  organizationId Int
+  invoiceId     Int
+  returnDate    DateTime @default(now())
+  reason        String?
+  remarks       String?
+  totalAmount   Float    @default(0)
+  status        String   @default("COMPLETED")
+  processedBy   Int?
+
+  organization Organization         @relation(fields: [organizationId], references: [id])
+  invoice      SalesInvoice         @relation(fields: [invoiceId], references: [id])
+  processedByUser User?             @relation("ProcessedReturns", fields: [processedBy], references: [id])
+  items        CustomerReturnItem[]
+}
+
+model CustomerReturnItem {
+  id            Int   @id @default(autoincrement())
+  returnId      Int
+  productId     Int
+  batchId       Int
+  quantity      Int
+  returnPrice   Float
+  subtotal      Float @default(0)
+
+  return  CustomerReturn @relation(fields: [returnId], references: [id], onDelete: Cascade)
+  product Product        @relation(fields: [productId], references: [id])
+  batch   Batch          @relation(fields: [batchId], references: [id])
+}
+
+model PurchaseReturn {
+  id            Int      @id @default(autoincrement())
+  organizationId Int
+  invoiceId     Int
+  returnDate    DateTime @default(now())
+  reason        String?
+  remarks       String?
+  totalAmount   Float    @default(0)
+  status        String   @default("COMPLETED")
+  processedBy   Int?
+
+  organization Organization         @relation(fields: [organizationId], references: [id])
+  invoice      PurchaseInvoice      @relation(fields: [invoiceId], references: [id])
+  processedByUser User?             @relation("ProcessedPurchaseReturns", fields: [processedBy], references: [id])
+  items        PurchaseReturnItem[]
+}
+
+model PurchaseReturnItem {
+  id            Int   @id @default(autoincrement())
+  returnId      Int
+  productId     Int
+  batchId       Int
+  quantity      Int
+  returnPrice   Float
+  subtotal      Float @default(0)
+
+  return  PurchaseReturn @relation(fields: [returnId], references: [id], onDelete: Cascade)
+  product Product        @relation(fields: [productId], references: [id])
+  batch   Batch          @relation(fields: [batchId], references: [id])
 }
 
 model Settings {

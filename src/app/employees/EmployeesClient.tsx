@@ -19,7 +19,7 @@ interface Employee {
   user: { username: string; isActive: boolean } | null;
 }
 
-export function EmployeesClient({ initialEmployees }: { initialEmployees: Employee[] }) {
+export function EmployeesClient({ initialEmployees, availableRoles = [] }: { initialEmployees: Employee[], availableRoles?: any[] }) {
   const { symbol } = useCurrency();
   const [employees, setEmployees] = useState<Employee[]>(initialEmployees);
   const [searchTerm, setSearchTerm] = useState('');
@@ -29,16 +29,17 @@ export function EmployeesClient({ initialEmployees }: { initialEmployees: Employ
   const [success, setSuccess] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  const defaultRole = availableRoles.length > 0 ? availableRoles[0].name : 'Cashier';
+
   const [formData, setFormData] = useState({
     name: '', 
     employeeCode: '', 
-    role: 'Cashier', 
+    role: defaultRole, 
     phone: '', 
     baseSalary: 0, 
     username: '', 
     password: '',
-    branchId: 1,
-    organizationId: 1 // Default organization
+    branchId: 1
   });
 
   const filteredEmployees = employees.filter(emp =>
@@ -78,7 +79,7 @@ export function EmployeesClient({ initialEmployees }: { initialEmployees: Employ
       setFormData({ 
         name: '', 
         employeeCode: `EMP-${Date.now().toString().slice(-4)}`, 
-        role: 'Cashier', 
+        role: defaultRole, 
         phone: '', 
         baseSalary: 0, 
         username: '', 
@@ -104,9 +105,14 @@ export function EmployeesClient({ initialEmployees }: { initialEmployees: Employ
         setSuccess('Employee updated successfully');
       } else {
         await createEmployee({
-          ...formData,
-          branchId: parseInt(formData.branchId.toString()),
-          organizationId: parseInt(formData.organizationId.toString())
+          name: formData.name,
+          employeeCode: formData.employeeCode,
+          role: formData.role,
+          phone: formData.phone,
+          baseSalary: formData.baseSalary,
+          branchId: formData.branchId,
+          username: formData.username,
+          password: formData.password
         });
         setSuccess('Employee and user account created');
       }
@@ -307,17 +313,16 @@ export function EmployeesClient({ initialEmployees }: { initialEmployees: Employ
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Assigned Role</label>
                     <select value={formData.role} onChange={(e) => setFormData({ ...formData, role: e.target.value })} className="w-full px-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-pink-500/20">
-                      <option value="Admin">Administrator</option>
-                      <option value="Manager">Manager</option>
-                      <option value="Cashier">Cashier / POS Operator</option>
-                      <option value="Salesman">Field Salesman</option>
+                      {availableRoles.map(role => (
+                        <option key={role.id} value={role.name}>{role.name}</option>
+                      ))}
                     </select>
                   </div>
                   <div className="space-y-1.5">
                     <label className="text-xs font-bold text-slate-400 uppercase tracking-widest ml-1">Base Salary (Monthly)</label>
                     <div className="relative">
-                      <DollarSign className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                      <input type="number" value={formData.baseSalary} onChange={(e) => setFormData({ ...formData, baseSalary: parseFloat(e.target.value) })} className="w-full pl-11 pr-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-pink-500/20" />
+                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-400 font-bold text-sm">{symbol}</span>
+                      <input type="number" value={formData.baseSalary} onChange={(e) => setFormData({ ...formData, baseSalary: parseFloat(e.target.value) })} className="w-full pl-14 pr-4 py-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-2xl text-sm font-bold focus:ring-2 focus:ring-pink-500/20" />
                     </div>
                   </div>
                   <div className="space-y-1.5">

@@ -55,6 +55,30 @@ export async function registerOrganization(data: {
     });
     console.log('Employee created:', employee.id);
 
+    // 5. Create Built-in Walking Customer for Retail POS
+    await prisma.customer.create({
+      data: {
+        organizationId: organization.id,
+        name: 'Walking Customer',
+        isWalkIn: true,
+        type: 'retail',
+      },
+    });
+    console.log('Walking Customer created');
+
+    // 6. Create Default System Roles
+    const defaultRoles = ['Admin', 'Manager', 'Cashier', 'Salesman'];
+    for (const roleName of defaultRoles) {
+      await prisma.employeeRole.create({
+        data: {
+          organizationId: organization.id,
+          name: roleName,
+          isSystem: true,
+        },
+      });
+    }
+    console.log('Default roles created');
+
     return { success: true, organizationId: organization.id };
   } catch (error) {
     console.error('Registration Error:', error);

@@ -49,18 +49,20 @@ export async function createEmployee(data: {
   phone?: string;
   baseSalary?: number;
   branchId: number;
-  organizationId: number; // New field
   username?: string;
   password?: string;
 }) {
   const session = await getSession();
   if (!session) throw new Error('Unauthorized');
 
-  const { name, employeeCode, role, phone, baseSalary, branchId, organizationId, username, password } = data;
+  const { name, employeeCode, role, phone, baseSalary, branchId, username, password } = data;
+  const organizationId = session.organizationId;
 
-  const branchExists = await prisma.branch.findUnique({ where: { id: branchId } });
+  const branchExists = await prisma.branch.findUnique({ 
+    where: { id: branchId, organizationId } 
+  });
   if (!branchExists) {
-    throw new Error(`Branch with ID ${branchId} does not exist.`);
+    throw new Error(`Branch with ID ${branchId} does not exist in your organization.`);
   }
 
   const employee = await prisma.employee.create({
@@ -71,7 +73,7 @@ export async function createEmployee(data: {
       phone,
       baseSalary: baseSalary || 0,
       branchId,
-      organizationId, // Added
+      organizationId,
     },
   });
 
@@ -80,7 +82,7 @@ export async function createEmployee(data: {
     const passwordHash = await hashPassword(password);
     const user = await prisma.user.create({
       data: {
-        organizationId, // Added
+        organizationId,
         username,
         passwordHash,
         role: role === 'Admin' ? 'admin' : role === 'Manager' ? 'manager' : 'cashier',
@@ -98,6 +100,7 @@ export async function createEmployee(data: {
   if (role === 'Salesman') {
     await prisma.salesman.create({
       data: {
+        organizationId,
         employeeId: employee.id,
         name,
         phone,

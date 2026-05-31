@@ -5,8 +5,12 @@ import { getSession } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
 
 export async function getSalesInvoicesForReturn() {
+  const session = await getSession();
+  if (!session) throw new Error('Unauthorized');
+
   return prisma.salesInvoice.findMany({
     where: {
+      organizationId: session.organizationId,
       status: { not: 'CANCELLED' },
     },
     include: {
@@ -23,8 +27,12 @@ export async function getSalesInvoicesForReturn() {
 }
 
 export async function getPurchaseInvoicesForReturn() {
+  const session = await getSession();
+  if (!session) throw new Error('Unauthorized');
+
   return prisma.purchaseInvoice.findMany({
     where: {
+      organizationId: session.organizationId,
       status: { not: 'CANCELLED' },
     },
     include: {
@@ -58,15 +66,16 @@ export async function createSalesReturn(data: {
   if (!session) throw new Error('Unauthorized');
 
   const { salesInvoiceId, items, returnReason, refundMethod } = data;
+  const organizationId = session.organizationId;
 
-  // Get original invoice
+  // Get original invoice with organization check
   const invoice = await prisma.salesInvoice.findUnique({
-    where: { id: salesInvoiceId },
+    where: { id: salesInvoiceId, organizationId },
     include: { customer: true },
   });
 
   if (!invoice) {
-    throw new Error('Invoice not found');
+    throw new Error('Invoice not found or does not belong to your organization');
   }
 
   // Calculate return amount
@@ -79,6 +88,7 @@ export async function createSalesReturn(data: {
     // Create sales return record
     const salesReturn = await tx.salesInvoice.create({
       data: {
+        organizationId,
         branchId: invoice.branchId,
         warehouseId: invoice.warehouseId,
         customerId: invoice.customerId,
@@ -95,6 +105,7 @@ export async function createSalesReturn(data: {
     for (const item of items) {
       await tx.salesInvoiceItem.create({
         data: {
+          organizationId,
           invoiceId: salesReturn.id,
           productId: item.productId,
           batchId: item.batchId,
@@ -107,6 +118,7 @@ export async function createSalesReturn(data: {
       // Restore stock
       const stock = await tx.stock.findFirst({
         where: {
+          organizationId,
           productId: item.productId,
           warehouseId: invoice.warehouseId,
           batchId: item.batchId,
@@ -121,6 +133,7 @@ export async function createSalesReturn(data: {
       } else {
         await tx.stock.create({
           data: {
+            organizationId,
             productId: item.productId,
             warehouseId: invoice.warehouseId,
             batchId: item.batchId,
@@ -132,12 +145,13 @@ export async function createSalesReturn(data: {
 
     // Update customer ledger
     const lastLedgerEntry = await tx.customerLedgerEntry.findFirst({
-      where: { customerId: invoice.customerId },
+      where: { customerId: invoice.customerId, organizationId },
       orderBy: { date: 'desc' },
     });
 
     await tx.customerLedgerEntry.create({
       data: {
+        organizationId,
         customerId: invoice.customerId,
         type: 'CREDIT',
         amount: returnAmount,
@@ -151,6 +165,7 @@ export async function createSalesReturn(data: {
     if (refundMethod === 'CASH') {
       await tx.payment.create({
         data: {
+          organizationId,
           branchId: invoice.branchId,
           type: 'OUTGOING',
           paymentMethod: 'CASH',
@@ -164,6 +179,7 @@ export async function createSalesReturn(data: {
     // Audit log
     await tx.auditLog.create({
       data: {
+        organizationId,
         userId: session.id,
         action: 'RETURN',
         tableName: 'SalesInvoice',
@@ -176,6 +192,7 @@ export async function createSalesReturn(data: {
   });
 
   revalidatePath('/sales');
+  revalidatePath('/returns');
   return result;
 }
 
@@ -194,15 +211,16 @@ export async function createPurchaseReturn(data: {
   if (!session) throw new Error('Unauthorized');
 
   const { purchaseInvoiceId, items, returnReason } = data;
+  const organizationId = session.organizationId;
 
-  // Get original invoice
+  // Get original invoice with organization check
   const invoice = await prisma.purchaseInvoice.findUnique({
-    where: { id: purchaseInvoiceId },
+    where: { id: purchaseInvoiceId, organizationId },
     include: { supplier: true },
   });
 
   if (!invoice) {
-    throw new Error('Invoice not found');
+    throw new Error('Invoice not found or does not belong to your organization');
   }
 
   // Calculate return amount
@@ -216,56 +234,66 @@ export async function createPurchaseReturn(data: {
     for (const item of items) {
       const stock = await tx.stock.findFirst({
         where: {
+          organizationId,
           productId: item.productId,
           warehouseId: invoice.warehouseId,
           batchId: item.batchId,
         },
       });
 
-      if (stock) {
-        const newQty = stock.quantity - item.quantity;
-        if (newQty <= 0) {
-          await tx.stock.delete({ where: { id: stock.id } });
-        } else {
-          await tx.stock.update({
-            where: { id: stock.id },
-            data: { quantity: newQty },
-          });
-        }
+      if (!stock) {
+        throw new Error(`Stock not found for product ID: ${item.productId}`);
+      }
+
+      if (stock.quantity < item.quantity) {
+        throw new Error(`Insufficient stock for product ID: ${item.productId}. Available: ${stock.quantity}, Requested: ${item.quantity}`);
+      }
+
+      const newQty = stock.quantity - item.quantity;
+      if (newQty <= 0) {
+        await tx.stock.delete({ where: { id: stock.id } });
+      } else {
+        await tx.stock.update({
+          where: { id: stock.id },
+          data: { quantity: newQty },
+        });
       }
     }
 
     // Update supplier ledger
     const lastLedgerEntry = await tx.supplierLedgerEntry.findFirst({
-      where: { supplierId: invoice.supplierId },
+      where: { supplierId: invoice.supplierId, organizationId },
       orderBy: { date: 'desc' },
     });
 
     await tx.supplierLedgerEntry.create({
       data: {
+        organizationId,
         supplierId: invoice.supplierId,
         type: 'DEBIT',
         amount: returnAmount,
-        description: `Return for ${invoice.invoiceNumber}`,
+        description: `Return for ${invoice.invoiceNumber}: ${returnReason}`,
         referenceId: invoice.invoiceNumber,
-        balance: (lastLedgerEntry?.balance || 0) + returnAmount,
+        balance: (lastLedgerEntry?.balance || 0) - returnAmount,
       },
     });
 
     // Audit log
     await tx.auditLog.create({
       data: {
+        organizationId,
         userId: session.id,
         action: 'RETURN',
         tableName: 'PurchaseInvoice',
         recordId: invoice.id,
-        details: `Purchase return for invoice ${invoice.invoiceNumber}, amount: ${returnAmount}`,
+        details: `Purchase return for invoice ${invoice.invoiceNumber}, amount: ${returnAmount}, reason: ${returnReason}`,
       },
     });
 
-    return { success: true };
+    return { success: true, returnAmount };
   });
 
   revalidatePath('/purchases');
+  revalidatePath('/returns');
   return result;
 }

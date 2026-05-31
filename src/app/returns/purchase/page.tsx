@@ -1,7 +1,9 @@
-import { getPurchaseInvoicesForReturn } from '../actions';
+import { getPurchaseInvoices, getPurchaseReturns } from './actions';
 import { PurchaseReturnsClient } from './PurchaseReturnsClient';
 
 export default async function PurchaseReturnsPage() {
-  const invoices = await getPurchaseInvoicesForReturn();
-  return <PurchaseReturnsClient initialInvoices={invoices} />;
+  const invoices = await getPurchaseInvoices();
+  const returns = await getPurchaseReturns();
+  
+  return <PurchaseReturnsClient invoices={invoices} returns={returns} />;
 }
