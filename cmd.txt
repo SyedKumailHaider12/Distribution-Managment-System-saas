@@ -1,0 +1,368 @@
+
+D:\Other Projects\Distribution_Managment_System_WebSaas>npm run dev
+
+> distribution-management-system@1.0.0 dev
+> next dev --webpack
+
+▲ Next.js 16.2.6 (webpack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.40.3:3000
+- Environments: .env
+✓ Ready in 911ms
+⚠ Attempted to load @next/swc-win32-x64-msvc, but an error occurred: \\?\D:\Other Projects\Distribution_Managment_System_WebSaas\node_modules\@next\swc-win32-x64-msvc\next-swc.win32-x64-msvc.node is not a valid Win32 application.
+\\?\D:\Other Projects\Distribution_Managment_System_WebSaas\node_modules\@next\swc-win32-x64-msvc\next-swc.win32-x64-msvc.node
+  Skipping creating a lockfile at D:\Other Projects\Distribution_Managment_System_WebSaas\.next\dev\lock because we're using WASM bindings
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+
+○ Compiling /login ...
+ GET /login 200 in 12.0s (next.js: 10.1s, proxy.ts: 569ms, application-code: 1392ms)
+ GET /api/auth/session 200 in 3.2s (next.js: 3.1s, proxy.ts: 21ms, application-code: 74ms)
+ GET /api/auth/session 200 in 396ms (next.js: 326ms, proxy.ts: 36ms, application-code: 33ms)
+ GET /login 200 in 445ms (next.js: 160ms, proxy.ts: 36ms, application-code: 249ms)
+ GET /api/auth/session 200 in 41ms (next.js: 8ms, proxy.ts: 17ms, application-code: 16ms)
+ GET /api/organizations 200 in 1433ms (next.js: 1344ms, proxy.ts: 15ms, application-code: 73ms)
+ GET /api/organizations 200 in 64ms (next.js: 12ms, proxy.ts: 26ms, application-code: 26ms)
+ POST /api/auth/login 200 in 1827ms (next.js: 1383ms, proxy.ts: 25ms, application-code: 419ms)
+ GET /api/auth/session 200 in 68ms (next.js: 29ms, proxy.ts: 20ms, application-code: 19ms)
+ GET /dashboard 200 in 2.3s (next.js: 2.1s, proxy.ts: 22ms, application-code: 158ms)
+ GET /dashboard 200 in 138ms (next.js: 12ms, proxy.ts: 22ms, application-code: 103ms)
+ GET /companies 200 in 3.4s (next.js: 3.2s, proxy.ts: 17ms, application-code: 222ms)
+ POST /companies 200 in 417ms (next.js: 19ms, proxy.ts: 38ms, application-code: 360ms)
+  └─ ƒ createOrganization({"address":"Hafizabad","contactPerson":"Aslam","email":"azanabbass627@gmail.com","...":"2 items not stringified"}) in 50ms ..//src/app/companies/actions.ts
+ GET /companies 200 in 243ms (next.js: 14ms, proxy.ts: 27ms, application-code: 202ms)
+○ Compiling /suppliers ...
+ GET /suppliers 200 in 4.4s (next.js: 4.1s, proxy.ts: 16ms, application-code: 271ms)
+ POST /suppliers 200 in 580ms (next.js: 18ms, proxy.ts: 29ms, application-code: 533ms)
+  └─ ƒ createSupplier({"address":"Pindi Bhattian","name":"Akmal","phone":"0312-1234567","...":"1 item not stringified"}) in 76ms ..//src/app/suppliers/actions.ts
+ GET /suppliers 200 in 270ms (next.js: 16ms, proxy.ts: 31ms, application-code: 223ms)
+ GET /suppliers 200 in 225ms (next.js: 14ms, proxy.ts: 23ms, application-code: 189ms)
+ GET /suppliers 200 in 646ms (next.js: 8ms, proxy.ts: 18ms, application-code: 620ms)
+ GET /api/auth/session 200 in 2.2s (next.js: 2.1s, proxy.ts: 18ms, application-code: 73ms)
+ GET /api/auth/session 200 in 53ms (next.js: 9ms, proxy.ts: 20ms, application-code: 25ms)
+ GET /api/auth/session 200 in 62ms (next.js: 9ms, proxy.ts: 21ms, application-code: 31ms)
+ GET /login 200 in 743ms (next.js: 155ms, proxy.ts: 21ms, application-code: 566ms)
+ GET /api/auth/session 200 in 45ms (next.js: 8ms, proxy.ts: 22ms, application-code: 15ms)
+ GET /api/auth/session 200 in 43ms (next.js: 7ms, proxy.ts: 15ms, application-code: 21ms)
+ GET /api/auth/session 200 in 31ms (next.js: 5ms, proxy.ts: 14ms, application-code: 12ms)
+ GET /api/organizations 200 in 1800ms (next.js: 1724ms, proxy.ts: 14ms, application-code: 62ms)
+ GET /api/organizations 200 in 55ms (next.js: 9ms, proxy.ts: 23ms, application-code: 23ms)
+ POST /api/auth/login 200 in 3.0s (next.js: 2.6s, proxy.ts: 23ms, application-code: 419ms)
+ GET /login 200 in 626ms (next.js: 206ms, proxy.ts: 155ms, application-code: 265ms)
+○ Compiling /api/auth/session ...
+ GET /api/auth/session 200 in 4.0s (next.js: 3.6s, proxy.ts: 369ms, application-code: 41ms)
+ GET /login 200 in 420ms (next.js: 94ms, proxy.ts: 33ms, application-code: 293ms)
+ GET /dashboard 200 in 213ms (next.js: 53ms, proxy.ts: 27ms, application-code: 133ms)
+ GET /dashboard 200 in 195ms (next.js: 18ms, proxy.ts: 36ms, application-code: 142ms)
+ GET /companies 200 in 208ms (next.js: 43ms, proxy.ts: 18ms, application-code: 147ms)
+ GET /suppliers 200 in 174ms (next.js: 48ms, proxy.ts: 19ms, application-code: 107ms)
+ GET /companies 200 in 77ms (next.js: 7ms, proxy.ts: 14ms, application-code: 55ms)
+ POST /companies 200 in 279ms (next.js: 12ms, proxy.ts: 21ms, application-code: 247ms)
+  └─ ƒ createOrganization({"address":"pakistan\nPunjab\nHafizabad","contactPerson":"Aslam","email":"shahkumail056@gmail.com","...":"2 items not stringified"}) in 42ms ..//src/app/companies/actions.ts
+ GET /companies 200 in 249ms (next.js: 16ms, proxy.ts: 31ms, application-code: 202ms)
+ GET /companies 200 in 244ms (next.js: 16ms, proxy.ts: 37ms, application-code: 191ms)
+ POST /companies 200 in 365ms (next.js: 17ms, proxy.ts: 37ms, application-code: 312ms)
+  └─ ƒ createOrganization({"address":"pakistan\nPunjab\nHafizabad","contactPerson":"Haider","email":"shahkumail056@gmail.com","...":"2 items not stringified"}) in 31ms ..//src/app/companies/actions.ts
+ GET /companies 200 in 233ms (next.js: 10ms, proxy.ts: 27ms, application-code: 197ms)
+⨯ Error [PrismaClientKnownRequestError]:
+Invalid `prisma.supplierCompany.update()` invocation:
+
+
+An operation failed because it depends on one or more records that were required but not found. Record to update not found.
+    at async updateOrganization (src\app\companies\actions.ts:47:3)
+  45 |   const session = await getSession()
+  46 |   if (!session) throw new Error('Unauthorized')
+> 47 |   await prisma.supplierCompany.update({
+     |   ^
+  48 |     where: { id },
+  49 |     data: {
+  50 |       name: data.name, {
+  code: 'P2025',
+  clientVersion: '5.22.0',
+  meta: {
+    modelName: 'SupplierCompany',
+    cause: 'Record to update not found.'
+  },
+  digest: '4156364627'
+}
+ POST /companies 500 in 1631ms (next.js: 15ms, proxy.ts: 22ms, application-code: 1594ms)
+  └─ ƒ updateOrganization(1780216090814, {"address":"Punjab\nHafizabad","contactPerson":"Aslam","email":"","...":"2 items not stringified"}) in 33ms ..//src/app/companies/actions.ts
+[browser] Failed to save supplier: PrismaClientKnownRequestError:
+Invalid `prisma.supplierCompany.update()` invocation:
+
+
+An operation failed because it depends on one or more records that were required but not found. Record to update not found.
+    at  updateOrganization (src\app\companies\actions.ts:47:3)
+  45 |   const session = await getSession()
+  46 |   if (!session) throw new Error('Unauthorized')
+> 47 |   await prisma.supplierCompany.update({
+     |   ^
+  48 |     where: { id },
+  49 |     data: {
+  50 |       name: data.name, (src\app\companies\CompaniesClient.tsx:57:15)
+ GET /suppliers 200 in 117ms (next.js: 9ms, proxy.ts: 16ms, application-code: 91ms)
+ GET /suppliers 200 in 636ms (next.js: 9ms, proxy.ts: 19ms, application-code: 608ms)
+ GET /api/auth/session 200 in 83ms (next.js: 11ms, proxy.ts: 44ms, application-code: 29ms)
+ GET /api/auth/session 200 in 41ms (next.js: 7ms, proxy.ts: 17ms, application-code: 16ms)
+ GET /api/auth/session 200 in 48ms (next.js: 14ms, proxy.ts: 18ms, application-code: 16ms)
+ POST /suppliers 200 in 449ms (next.js: 14ms, proxy.ts: 25ms, application-code: 410ms)
+  └─ ƒ createSupplier({"address":"Lahore","name":"Rafeeq","phone":"0300-0990987","...":"1 item not stringified"}) in 41ms ..//src/app/suppliers/actions.ts
+ GET /suppliers 200 in 613ms (next.js: 29ms, proxy.ts: 22ms, application-code: 562ms)
+ GET /suppliers 200 in 213ms (next.js: 10ms, proxy.ts: 21ms, application-code: 183ms)
+○ Compiling /categories ...
+ GET /categories 200 in 4.6s (next.js: 4.4s, proxy.ts: 16ms, application-code: 205ms)
+ GET /suppliers 200 in 134ms (next.js: 52ms, proxy.ts: 28ms, application-code: 54ms)
+ GET /suppliers 200 in 557ms (next.js: 9ms, proxy.ts: 22ms, application-code: 525ms)
+ GET /suppliers 200 in 568ms (next.js: 80ms, proxy.ts: 22ms, application-code: 466ms)
+ POST /suppliers 200 in 539ms (next.js: 16ms, proxy.ts: 31ms, application-code: 492ms)
+  └─ ƒ createSupplier({"address":"P B","name":"Ahsan","phone":"0308-9887765","...":"1 item not stringified"}) in 32ms ..//src/app/suppliers/actions.ts
+ GET /suppliers 200 in 190ms (next.js: 23ms, proxy.ts: 29ms, application-code: 137ms)
+ GET /suppliers 200 in 653ms (next.js: 8ms, proxy.ts: 17ms, application-code: 627ms)
+ GET /api/auth/session 200 in 102ms (next.js: 37ms, proxy.ts: 14ms, application-code: 51ms)
+ GET /api/auth/session 200 in 64ms (next.js: 13ms, proxy.ts: 28ms, application-code: 23ms)
+ GET /api/auth/session 200 in 47ms (next.js: 9ms, proxy.ts: 19ms, application-code: 19ms)
+ GET /categories 200 in 93ms (next.js: 10ms, proxy.ts: 18ms, application-code: 66ms)
+ POST /categories 200 in 255ms (next.js: 10ms, proxy.ts: 27ms, application-code: 218ms)
+  └─ ƒ createCategory({"description":"Medical Products","name":"Medicines"}) in 30ms ..//src/app/categories/actions.ts
+ GET /categories 200 in 212ms (next.js: 15ms, proxy.ts: 23ms, application-code: 175ms)
+ POST /categories 200 in 336ms (next.js: 15ms, proxy.ts: 32ms, application-code: 288ms)
+  └─ ƒ createCategory({"description":"Daily Use Items","name":"General Products"}) in 46ms ..//src/app/categories/actions.ts
+ GET /categories 200 in 286ms (next.js: 15ms, proxy.ts: 29ms, application-code: 241ms)
+ GET /categories 200 in 171ms (next.js: 8ms, proxy.ts: 20ms, application-code: 143ms)
+ POST /categories 200 in 293ms (next.js: 10ms, proxy.ts: 26ms, application-code: 258ms)
+  └─ ƒ createCategory({"description":"Mackup Items","name":"Casmeticis"}) in 44ms ..//src/app/categories/actions.ts
+ GET /categories 200 in 242ms (next.js: 18ms, proxy.ts: 30ms, application-code: 193ms)
+ GET /categories 200 in 184ms (next.js: 10ms, proxy.ts: 21ms, application-code: 153ms)
+○ Compiling /warehouses ...
+ GET /warehouses 200 in 4.6s (next.js: 4.5s, proxy.ts: 16ms, application-code: 161ms)
+ GET /warehouses 200 in 121ms (next.js: 9ms, proxy.ts: 18ms, application-code: 94ms)
+ POST /warehouses 200 in 445ms (next.js: 13ms, proxy.ts: 28ms, application-code: 404ms)
+  └─ ƒ createWarehouse({"description":"P B","name":"Main Ware House","number":1,"...":"1 item not stringified"}) in 43ms ..//src/app/warehouses/actions.ts
+ GET /warehouses 200 in 276ms (next.js: 13ms, proxy.ts: 42ms, application-code: 221ms)
+ GET /warehouses 200 in 121ms (next.js: 11ms, proxy.ts: 23ms, application-code: 87ms)
+ POST /warehouses 200 in 191ms (next.js: 13ms, proxy.ts: 22ms, application-code: 157ms)
+  └─ ƒ createWarehouse({"description":"P B","name":"Shop 1","number":2,"...":"1 item not stringified"}) in 23ms ..//src/app/warehouses/actions.ts
+ GET /warehouses 200 in 265ms (next.js: 121ms, proxy.ts: 29ms, application-code: 116ms)
+ POST /warehouses 200 in 278ms (next.js: 15ms, proxy.ts: 29ms, application-code: 234ms)
+  └─ ƒ createWarehouse({"description":"P B","name":"Shop 2","number":3,"...":"1 item not stringified"}) in 31ms ..//src/app/warehouses/actions.ts
+ GET /warehouses 200 in 149ms (next.js: 10ms, proxy.ts: 26ms, application-code: 113ms)
+○ Compiling /customers ...
+ GET /customers 200 in 5.1s (next.js: 4.9s, proxy.ts: 18ms, application-code: 156ms)
+ GET /customers 200 in 144ms (next.js: 9ms, proxy.ts: 15ms, application-code: 120ms)
+ POST /customers 200 in 574ms (next.js: 15ms, proxy.ts: 37ms, application-code: 522ms)
+  └─ ƒ createCustomer({"address":"sadat street house number 68/1 muhala chowk sarajan pindi bhattian district hafizabad","creditLimit":0,"email":"azanabbass627@gmail.com","...":"3 items not stringified"}) in 51ms ..//src/app/customers/actions.ts
+[browser] Uncaught TypeError: cust.creditLimit.toFixed is not a function
+    at eval (src\app\customers\CustomersClient.tsx:237:102)
+    at Array.map (<anonymous>)
+    at CustomersClient (src\app\customers\CustomersClient.tsx:221:35)
+    at CustomersPage (src\app\customers\page.tsx:11:10)
+  235 |                     </td>
+  236 |                     <td className="px-6 py-4">
+> 237 |                       <div className="font-medium text-slate-800 dark:text-white">${cust.creditLimit.toFixed(2)}</div>
+      |                                                                                                      ^
+  238 |                     </td>
+  239 |                     <td className="px-6 py-4 text-right">
+  240 |                       <div className="flex items-center justify-end gap-2">
+ GET /customers 200 in 1265ms (next.js: 24ms, proxy.ts: 30ms, application-code: 1210ms)
+ GET /api/auth/session 200 in 2.4s (next.js: 2.3s, proxy.ts: 45ms, application-code: 64ms)
+ GET /api/auth/session 200 in 47ms (next.js: 10ms, proxy.ts: 23ms, application-code: 14ms)
+ GET /api/auth/session 200 in 33ms (next.js: 6ms, proxy.ts: 14ms, application-code: 13ms)
+ POST /customers 200 in 649ms (next.js: 206ms, proxy.ts: 28ms, application-code: 416ms)
+  └─ ƒ createCustomer({"address":"pakistan","creditLimit":0,"email":"shahkumail056@gmail.com","...":"3 items not stringified"}) in 29ms ..//src/app/customers/actions.ts
+[browser] Uncaught TypeError: cust.creditLimit.toFixed is not a function
+    at eval (src\app\customers\CustomersClient.tsx:237:102)
+    at Array.map (<anonymous>)
+    at CustomersClient (src\app\customers\CustomersClient.tsx:221:35)
+    at CustomersPage (src\app\customers\page.tsx:11:10)
+  235 |                     </td>
+  236 |                     <td className="px-6 py-4">
+> 237 |                       <div className="font-medium text-slate-800 dark:text-white">${cust.creditLimit.toFixed(2)}</div>
+      |                                                                                                      ^
+  238 |                     </td>
+  239 |                     <td className="px-6 py-4 text-right">
+  240 |                       <div className="flex items-center justify-end gap-2">
+ GET /customers 200 in 578ms (next.js: 19ms, proxy.ts: 24ms, application-code: 535ms)
+ GET /api/auth/session 200 in 78ms (next.js: 15ms, proxy.ts: 20ms, application-code: 44ms)
+ GET /api/auth/session 200 in 54ms (next.js: 10ms, proxy.ts: 27ms, application-code: 18ms)
+ GET /api/auth/session 200 in 49ms (next.js: 8ms, proxy.ts: 21ms, application-code: 20ms)
+○ Compiling /purchases ...
+ GET /settings 200 in 5.4s (next.js: 5.1s, proxy.ts: 35ms, application-code: 257ms)
+ GET /purchases 200 in 11.0s (next.js: 10.6s, proxy.ts: 16ms, application-code: 336ms)
+ GET /settings 200 in 119ms (next.js: 16ms, proxy.ts: 29ms, application-code: 75ms)
+○ Compiling /api/settings ...
+ GET /api/settings 200 in 6.6s (next.js: 6.4s, proxy.ts: 14ms, application-code: 182ms)
+ GET /settings 200 in 6.5s (next.js: 6.2s, proxy.ts: 83ms, application-code: 206ms)
+ GET /api/settings 200 in 160ms (next.js: 25ms, proxy.ts: 114ms, application-code: 21ms)
+ GET /settings 200 in 220ms (next.js: 18ms, proxy.ts: 32ms, application-code: 171ms)
+ POST /settings 200 in 99ms (next.js: 9ms, proxy.ts: 21ms, application-code: 69ms)
+  └─ ƒ setAppSetting("company_name", "") in 26ms ..//src/app/settings/actions.ts
+ POST /settings 200 in 99ms (next.js: 21ms, proxy.ts: 17ms, application-code: 61ms)
+  └─ ƒ setAppSetting("company_contact", "") in 27ms ..//src/app/settings/actions.ts
+ POST /settings 200 in 87ms (next.js: 15ms, proxy.ts: 27ms, application-code: 45ms)
+  └─ ƒ setAppSetting("company_phone", "") in 18ms ..//src/app/settings/actions.ts
+ POST /settings 200 in 242ms (next.js: 12ms, proxy.ts: 13ms, application-code: 216ms)
+  └─ ƒ setAppSetting("company_email", "") in 16ms ..//src/app/settings/actions.ts
+ POST /settings 200 in 139ms (next.js: 13ms, proxy.ts: 32ms, application-code: 95ms)
+  └─ ƒ setAppSetting("company_address", "") in 47ms ..//src/app/settings/actions.ts
+ POST /settings 200 in 240ms (next.js: 31ms, proxy.ts: 34ms, application-code: 175ms)
+  └─ ƒ setAppSetting("company_city", "") in 110ms ..//src/app/settings/actions.ts
+ GET /settings 200 in 532ms (next.js: 47ms, proxy.ts: 39ms, application-code: 446ms)
+ POST /settings 200 in 372ms (next.js: 62ms, proxy.ts: 251ms, application-code: 59ms)
+  └─ ƒ setAppSetting("invoice_header", "") in 24ms ..//src/app/settings/actions.ts
+ POST /settings 200 in 79ms (next.js: 11ms, proxy.ts: 23ms, application-code: 44ms)
+  └─ ƒ setAppSetting("invoice_footer", "") in 19ms ..//src/app/settings/actions.ts
+ POST /settings 200 in 124ms (next.js: 14ms, proxy.ts: 34ms, application-code: 76ms)
+  └─ ƒ setAppSetting("invoice_prefix", "INV") in 36ms ..//src/app/settings/actions.ts
+ POST /settings 200 in 446ms (next.js: 56ms, proxy.ts: 34ms, application-code: 356ms)
+  └─ ƒ setAppSetting("invoice_tax", "0") in 161ms ..//src/app/settings/actions.ts
+ POST /settings 200 in 495ms (next.js: 96ms, proxy.ts: 70ms, application-code: 329ms)
+  └─ ƒ setAppSetting("currency", "PKR") in 268ms ..//src/app/settings/actions.ts
+ GET /settings 200 in 542ms (next.js: 23ms, proxy.ts: 65ms, application-code: 454ms)
+ POST /settings 200 in 105ms (next.js: 15ms, proxy.ts: 40ms, application-code: 51ms)
+  └─ ƒ setAppSetting("invoice_show_logo", "true") in 18ms ..//src/app/settings/actions.ts
+ POST /settings 200 in 318ms (next.js: 9ms, proxy.ts: 20ms, application-code: 289ms)
+  └─ ƒ setAppSetting("alert_expiry_days", "30") in 247ms ..//src/app/settings/actions.ts
+ POST /settings 200 in 134ms (next.js: 12ms, proxy.ts: 37ms, application-code: 85ms)
+  └─ ƒ setAppSetting("alert_stock_threshold", "10") in 35ms ..//src/app/settings/actions.ts
+ POST /settings 200 in 248ms (next.js: 93ms, proxy.ts: 40ms, application-code: 115ms)
+  └─ ƒ setAppSetting("alert_email_enabled", "false") in 31ms ..//src/app/settings/actions.ts
+ GET /settings 200 in 301ms (next.js: 16ms, proxy.ts: 38ms, application-code: 248ms)
+ POST /settings 200 in 350ms (next.js: 242ms, proxy.ts: 45ms, application-code: 63ms)
+  └─ ƒ setAppSetting("alert_email", "") in 21ms ..//src/app/settings/actions.ts
+ GET /settings 200 in 232ms (next.js: 19ms, proxy.ts: 24ms, application-code: 189ms)
+ GET /settings 200 in 118ms (next.js: 11ms, proxy.ts: 20ms, application-code: 88ms)
+ POST /settings 200 in 84ms (next.js: 8ms, proxy.ts: 23ms, application-code: 52ms)
+  └─ ƒ setAppSetting("company_name", "Zafar Medical Store") in 14ms ..//src/app/settings/actions.ts
+ POST /settings 200 in 103ms (next.js: 23ms, proxy.ts: 28ms, application-code: 53ms)
+  └─ ƒ setAppSetting("company_contact", "") in 18ms ..//src/app/settings/actions.ts
+ POST /settings 200 in 105ms (next.js: 20ms, proxy.ts: 31ms, application-code: 54ms)
+  └─ ƒ setAppSetting("company_phone", "03320638672") in 21ms ..//src/app/settings/actions.ts
+ POST /settings 200 in 98ms (next.js: 13ms, proxy.ts: 22ms, application-code: 64ms)
+  └─ ƒ setAppSetting("company_email", "shahkumail056@gmail.com") in 22ms ..//src/app/settings/actions.ts
+⨯ SyntaxError: Unexpected end of JSON input
+    at JSON.parse (<anonymous>) {
+  page: '/settings'
+}
+○ Compiling /_error ...
+ POST /settings 500 in 11.7s (next.js: 10.4s, proxy.ts: 807ms, application-code: 500ms)
+ GET /settings 200 in 740ms (next.js: 368ms, proxy.ts: 22ms, application-code: 350ms)
+ GET /settings 200 in 312ms (next.js: 20ms, proxy.ts: 23ms, application-code: 269ms)
+ GET /settings 200 in 195ms (next.js: 18ms, proxy.ts: 27ms, application-code: 150ms)
+[browser] Failed to save settings Error: An unexpected response was received from the server. (src\app\settings\page.tsx:111:15)
+ GET /warehouses 200 in 250ms (next.js: 62ms, proxy.ts: 28ms, application-code: 160ms)
+ GET /customers 200 in 168ms (next.js: 49ms, proxy.ts: 16ms, application-code: 103ms)
+○ Compiling /purchases ...
+ GET /purchases 200 in 5.8s (next.js: 5.2s, proxy.ts: 25ms, application-code: 500ms)
+ GET /purchases 200 in 359ms (next.js: 17ms, proxy.ts: 35ms, application-code: 307ms)
+ GET /purchases 200 in 290ms (next.js: 28ms, proxy.ts: 30ms, application-code: 232ms)
+ GET /purchases 200 in 126ms (next.js: 7ms, proxy.ts: 16ms, application-code: 104ms)
+ GET /api/settings 200 in 3.7s (next.js: 3.4s, proxy.ts: 13ms, application-code: 219ms)
+ GET /api/settings 200 in 173ms (next.js: 25ms, proxy.ts: 121ms, application-code: 27ms)
+ GET /purchases 200 in 3.8s (next.js: 3.4s, proxy.ts: 27ms, application-code: 442ms)
+ GET /purchases 200 in 277ms (next.js: 23ms, proxy.ts: 48ms, application-code: 206ms)
+○ Compiling /api/products/search ...
+ GET /api/products/search?q=Nims 200 in 7.7s (next.js: 3.6s, proxy.ts: 31ms, application-code: 4.0s)
+ GET /api/products/search?q=Nim 200 in 11.6s (next.js: 4.6s, proxy.ts: 32ms, application-code: 6.9s)
+ GET /api/products/search?q=Ni 200 in 15.9s (next.js: 5.3s, proxy.ts: 17ms, application-code: 10.5s)
+ GET /purchases 200 in 10.8s (next.js: 141ms, proxy.ts: 10.5s, application-code: 229ms)
+ GET /api/products/search?q=Nim 200 in 4.6s (next.js: 13ms, proxy.ts: 25ms, application-code: 4.6s)
+ GET /api/products/search?q=Nim 200 in 3.4s (next.js: 3ms, proxy.ts: 32ms, application-code: 3.4s)
+ GET /api/products/search?q=Nims 200 in 3.3s (next.js: 8ms, proxy.ts: 15ms, application-code: 3.2s)
+ GET /api/products/search?q=NIMS%20100MG%20TAB 200 in 2.8s (next.js: 6ms, proxy.ts: 15ms, application-code: 2.8s)
+ GET /api/products/search?q=Panadol 200 in 4.1s (next.js: 12ms, proxy.ts: 30ms, application-code: 4.1s)
+ GET /api/products/search?q=PANADOL%20500MG%20TABS 200 in 3.7s (next.js: 7ms, proxy.ts: 20ms, application-code: 3.7s)
+ GET /api/products/search?q=brufo 200 in 4.4s (next.js: 10ms, proxy.ts: 18ms, application-code: 4.4s)
+ GET /api/products/search?q=brufon 200 in 2.7s (next.js: 7ms, proxy.ts: 16ms, application-code: 2.7s)
+ GET /api/products/search?q=brufo 200 in 3.2s (next.js: 7ms, proxy.ts: 17ms, application-code: 3.2s)
+ GET /api/products/search?q=BRUFOZ%20TABLET%20100MG 200 in 3.4s (next.js: 5ms, proxy.ts: 16ms, application-code: 3.3s)
+Purchase creation error: Error [PrismaClientValidationError]:
+Invalid `prisma.batch.findUnique()` invocation:
+
+{
+  where: {
+    organizationId: 1,
+    productId_batchNumber: {
+    ~~~~~~~~~~~~~~~~~~~~~
+      organizationId: 1,
+      productId: 1,
+      batchNumber: "Nim-001"
+    },
+?   id?: Int,
+?   organizationId_productId_batchNumber?: BatchOrganizationIdProductIdBatchNumberCompoundUniqueInput,
+?   AND?: BatchWhereInput | BatchWhereInput[],
+?   OR?: BatchWhereInput[],
+?   NOT?: BatchWhereInput | BatchWhereInput[],
+?   productId?: IntFilter | Int,
+?   batchNumber?: StringFilter | String,
+?   expiryDate?: DateTimeNullableFilter | DateTime | Null,
+?   purchasePrice?: FloatFilter | Float,
+?   createdAt?: DateTimeFilter | DateTime,
+?   organization?: OrganizationRelationFilter | OrganizationWhereInput,
+?   product?: ProductRelationFilter | ProductWhereInput,
+?   stocks?: StockListRelationFilter,
+?   purchaseInvoiceItems?: PurchaseInvoiceItemListRelationFilter,
+?   salesInvoiceItems?: SalesInvoiceItemListRelationFilter
+  }
+}
+
+Unknown argument `productId_batchNumber`. Available options are marked with ?.
+    at async eval (src\app\purchases\actions.ts:159:23)
+    at async createPurchaseInvoice (src\app\purchases\actions.ts:115:20)
+  157 |         let batchId: number;
+  158 |         if (item.batchNumber) {
+> 159 |           let batch = await tx.batch.findUnique({
+      |                       ^
+  160 |             where: {
+  161 |               organizationId,
+  162 |               productId_batchNumber: { {
+  clientVersion: '5.22.0'
+}
+ POST /purchases 200 in 1608ms (next.js: 9ms, proxy.ts: 19ms, application-code: 1580ms)
+  └─ ƒ createPurchaseInvoice({"discount":0,"invoiceDate":"2026-05-31","invoiceNumber":"INV-001","...":"6 items not stringified"}) in 1241ms ..//src/app/purchases/actions.ts
+ GET /purchases 200 in 455ms (next.js: 21ms, proxy.ts: 29ms, application-code: 404ms)
+ GET /purchases 200 in 336ms (next.js: 25ms, proxy.ts: 44ms, application-code: 267ms)
+Purchase creation error: Error [PrismaClientValidationError]:
+Invalid `prisma.batch.findUnique()` invocation:
+
+{
+  where: {
+    organizationId: 1,
+    productId_batchNumber: {
+    ~~~~~~~~~~~~~~~~~~~~~
+      organizationId: 1,
+      productId: 1,
+      batchNumber: "Nim-001"
+    },
+?   id?: Int,
+?   organizationId_productId_batchNumber?: BatchOrganizationIdProductIdBatchNumberCompoundUniqueInput,
+?   AND?: BatchWhereInput | BatchWhereInput[],
+?   OR?: BatchWhereInput[],
+?   NOT?: BatchWhereInput | BatchWhereInput[],
+?   productId?: IntFilter | Int,
+?   batchNumber?: StringFilter | String,
+?   expiryDate?: DateTimeNullableFilter | DateTime | Null,
+?   purchasePrice?: FloatFilter | Float,
+?   createdAt?: DateTimeFilter | DateTime,
+?   organization?: OrganizationRelationFilter | OrganizationWhereInput,
+?   product?: ProductRelationFilter | ProductWhereInput,
+?   stocks?: StockListRelationFilter,
+?   purchaseInvoiceItems?: PurchaseInvoiceItemListRelationFilter,
+?   salesInvoiceItems?: SalesInvoiceItemListRelationFilter
+  }
+}
+
+Unknown argument `productId_batchNumber`. Available options are marked with ?.
+    at async eval (src\app\purchases\actions.ts:159:23)
+    at async createPurchaseInvoice (src\app\purchases\actions.ts:115:20)
+  157 |         let batchId: number;
+  158 |         if (item.batchNumber) {
+> 159 |           let batch = await tx.batch.findUnique({
+      |                       ^
+  160 |             where: {
+  161 |               organizationId,
+  162 |               productId_batchNumber: { {
+  clientVersion: '5.22.0'
+}
+ POST /purchases 200 in 920ms (next.js: 9ms, proxy.ts: 15ms, application-code: 896ms)
+  └─ ƒ createPurchaseInvoice({"discount":0,"invoiceDate":"2026-05-31","invoiceNumber":"INV-001","...":"6 items not stringified"}) in 867ms ..//src/app/purchases/actions.ts
+ GET /purchases 200 in 696ms (next.js: 15ms, proxy.ts: 40ms, application-code: 641ms)
+ GET /purchases 200 in 588ms (next.js: 31ms, proxy.ts: 25ms, application-code: 532ms)

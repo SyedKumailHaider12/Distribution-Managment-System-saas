@@ -1,0 +1,70 @@
+"use client";
+
+import React, { useState, useEffect } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import { Header } from './Header';
+import { Footer } from './Footer';
+import { PublicHeader } from './ui/PublicHeader';
+import { PublicFooter } from './ui/PublicFooter';
+import { AuthProvider, useAuth } from './AuthProvider';
+
+function LayoutContent({ children }: { children: React.ReactNode }) {
+  const router = useRouter();
+  const pathname = usePathname();
+  const { user, loading } = useAuth();
+
+  const isPublicPage = pathname === '/login' || pathname === '/signup' || pathname === '/landing' || pathname === '/';
+
+  useEffect(() => {
+    if (!loading && !user && !isPublicPage) {
+      router.push('/login');
+    }
+  }, [user, loading, router, isPublicPage]);
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  if (isPublicPage) {
+    return (
+      <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-slate-950">
+        <PublicHeader />
+        <main className="flex-1">
+          {children}
+        </main>
+        <PublicFooter />
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
+
+  return (
+    <div className="flex flex-col min-h-screen bg-transparent">
+      <Header />
+
+      {/* Main Content Area */}
+      <main className="flex-1 p-4 md:p-6 z-0">
+        <div className="max-w-7xl mx-auto">
+          {children}
+        </div>
+      </main>
+
+      <Footer />
+    </div>
+  );
+}
+
+export function ClientLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <AuthProvider>
+      <LayoutContent>{children}</LayoutContent>
+    </AuthProvider>
+  );
+}

@@ -1,0 +1,500 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// === MULTI-TENANT ===
+model Organization {
+  id            Int      @id @default(autoincrement())
+  name          String
+  slug          String   @unique
+  contactPerson String?
+  phone         String?
+  email         String?
+  address       String?
+  logoUrl       String?  // URL to organization logo
+  taxId         String?  // Tax identification number
+  website       String?  // Organization website
+  currency      String?  // Preferred currency (e.g., USD, EUR)
+  createdAt     DateTime @default(now())
+
+  branches  Branch[]
+  users     User[]
+  brands    Brand[]
+  supplierCompanies SupplierCompany[]
+  suppliers Supplier[]
+  settings  Settings?
+  products  Product[]
+  customers Customer[]
+  salesmen Salesman[]
+  categories Category[]
+  employees Employee[]
+  areas     Area[]
+  batches   Batch[]
+  warehouses Warehouse[]
+  stocks    Stock[]
+  customerLedgerEntries CustomerLedgerEntry[]
+  supplierLedgerEntries SupplierLedgerEntry[]
+  payments  Payment[]
+  purchaseInvoices PurchaseInvoice[]
+  purchaseInvoiceItems PurchaseInvoiceItem[]
+  salesInvoices SalesInvoice[]
+  salesInvoiceItems SalesInvoiceItem[]
+  auditLogs AuditLog[]
+}
+
+model Branch {
+  id             Int      @id @default(autoincrement())
+  organizationId Int
+  name           String
+  address        String?
+  phone          String?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+
+  organization     Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  employees        Employee[]
+  salesInvoices    SalesInvoice[]
+  purchaseInvoices PurchaseInvoice[]
+  payments         Payment[]
+}
+
+// === HR & STAFF MANAGEMENT ===
+model Employee {
+  id           Int      @id @default(autoincrement())
+  organizationId Int
+  branchId     Int
+  userId       Int?     @unique
+  employeeCode String   @unique
+  name         String
+  role         String
+  phone        String?
+  baseSalary   Float    @default(0)
+  joinDate     DateTime @default(now())
+  isActive     Boolean  @default(true)
+
+  organization    Organization @relation(fields: [organizationId], references: [id])
+  branch          Branch       @relation(fields: [branchId], references: [id])
+  user            User?        @relation(fields: [userId], references: [id])
+  attendances     Attendance[]
+  salarySlips     SalarySlip[]
+  salesmanProfile Salesman?
+}
+
+model Attendance {
+  id         Int       @id @default(autoincrement())
+  employeeId Int
+  date       DateTime
+  status     String
+  punchIn    DateTime?
+  punchOut   DateTime?
+  markedBy   Int?
+  notes      String?
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  manager  User?    @relation("MarkedBy", fields: [markedBy], references: [id])
+
+  @@unique([employeeId, date])
+}
+
+model SalarySlip {
+  id         Int       @id @default(autoincrement())
+  employeeId Int
+  month      String
+  baseSalary Float
+  deductions Float     @default(0)
+  bonuses    Float     @default(0)
+  netSalary  Float
+  status     String    @default("UNPAID")
+  paidDate   DateTime?
+
+  employee Employee @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+
+  @@unique([employeeId, month])
+}
+
+// === AUTHENTICATION ===
+model User {
+  id             Int     @id @default(autoincrement())
+  organizationId Int
+  username       String
+  passwordHash   String
+  role           String  @default("cashier")
+  fullName       String?
+  isActive       Boolean @default(true)
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  employee     Employee?
+  auditLogs    AuditLog[]
+  markedAttendances Attendance[] @relation("MarkedBy")
+
+  @@unique([organizationId, username])
+}
+
+// === CORE MASTER DATA ===
+model Area {
+  id          Int     @id @default(autoincrement())
+  organizationId Int
+  name        String
+  description String?
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  salesmen     Salesman[]
+  customers    Customer[]
+}
+
+model Salesman {
+  id             Int   @id @default(autoincrement())
+  organizationId Int
+  employeeId     Int   @unique
+  areaId         Int?
+  commissionRate Float @default(0)
+
+  organization  Organization   @relation(fields: [organizationId], references: [id])
+  employee      Employee       @relation(fields: [employeeId], references: [id], onDelete: Cascade)
+  area          Area?          @relation(fields: [areaId], references: [id])
+  salesInvoices SalesInvoice[]
+  name          String
+  phone         String?
+  target        Float?
+  createdAt     DateTime @default(now())
+}
+
+model Brand {
+  id             Int      @id @default(autoincrement())
+  organizationId Int
+  name           String
+  description    String?
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  products     Product[]
+}
+
+model Category {
+  id             Int     @id @default(autoincrement())
+  organizationId Int
+  name           String
+  description    String?
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  products     Product[]
+}
+
+model Product {
+  id                    Int      @id @default(autoincrement())
+  organizationId        Int
+  brandId               Int?
+  categoryId            Int?
+  name                  String
+  genericName           String?
+  barcode               String?
+  purchasePrice         Float    @default(0)
+  salePriceRetail       Float    @default(0)
+  salePriceDistribution Float    @default(0)
+  unit                  String   @default("unit")
+  reorderLevel          Int      @default(0)
+  createdAt             DateTime @default(now())
+
+  organization         Organization          @relation(fields: [organizationId], references: [id])
+  brand                Brand?                @relation(fields: [brandId], references: [id])
+  category             Category?             @relation(fields: [categoryId], references: [id])
+  batches              Batch[]
+  stocks               Stock[]
+  purchaseInvoiceItems PurchaseInvoiceItem[]
+  salesInvoiceItems    SalesInvoiceItem[]
+
+  @@unique([organizationId, barcode])
+}
+
+model Batch {
+  id             Int       @id @default(autoincrement())
+  organizationId Int
+  productId      Int
+  batchNumber    String
+  expiryDate     DateTime?
+  purchasePrice  Float     @default(0)
+  createdAt      DateTime  @default(now())
+
+  organization         Organization          @relation(fields: [organizationId], references: [id])
+  product              Product               @relation(fields: [productId], references: [id])
+  stocks               Stock[]
+  purchaseInvoiceItems PurchaseInvoiceItem[]
+  salesInvoiceItems    SalesInvoiceItem[]
+
+  @@unique([organizationId, productId, batchNumber])
+}
+
+model Warehouse {
+  id             Int      @id @default(autoincrement())
+  organizationId Int
+  number         Int      @default(0)
+  name           String
+  type           String
+  description    String?
+
+  organization     Organization      @relation(fields: [organizationId], references: [id])
+  stocks           Stock[]
+  purchaseInvoices PurchaseInvoice[]
+  salesInvoices    SalesInvoice[]
+}
+
+model Stock {
+  id          Int @id @default(autoincrement())
+  organizationId Int
+  productId   Int
+  warehouseId Int
+  batchId     Int
+  quantity    Int @default(0)
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  product      Product      @relation(fields: [productId], references: [id])
+  warehouse    Warehouse    @relation(fields: [warehouseId], references: [id])
+  batch        Batch        @relation(fields: [batchId], references: [id])
+
+  @@unique([organizationId, warehouseId, productId, batchId])
+}
+
+// === ENTITIES ===
+model Customer {
+  id          Int      @id @default(autoincrement())
+  organizationId Int
+  name        String
+  phone       String?
+  email       String?
+  address     String?
+  areaId      Int?
+  creditLimit Float    @default(0)
+  isWalkIn    Boolean  @default(false)
+  type        String   @default("retail")
+  createdAt   DateTime @default(now())
+
+  organization  Organization          @relation(fields: [organizationId], references: [id])
+  area          Area?                 @relation(fields: [areaId], references: [id])
+  salesInvoices SalesInvoice[]
+  ledgerEntries CustomerLedgerEntry[]
+  payments      Payment[]
+}
+
+model SupplierCompany {
+  id             Int      @id @default(autoincrement())
+  organizationId Int
+  name           String
+  contactPerson  String?
+  phone          String?
+  email          String?
+  address        String?
+  createdAt      DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  suppliers    Supplier[]
+}
+
+model Supplier {
+  id                Int      @id @default(autoincrement())
+  organizationId    Int
+  supplierCompanyId Int?
+  name              String
+  phone             String?
+  address           String?
+  contactPerson     String?
+  createdAt         DateTime @default(now())
+
+  organization     Organization          @relation(fields: [organizationId], references: [id])
+  supplierCompany  SupplierCompany?      @relation(fields: [supplierCompanyId], references: [id], onDelete: Cascade)
+  purchaseInvoices PurchaseInvoice[]
+  ledgerEntries    SupplierLedgerEntry[]
+  payments         Payment[]
+}
+
+// === FINANCIAL LEDGERS & PAYMENTS ===
+model CustomerLedgerEntry {
+  id          Int      @id @default(autoincrement())
+  organizationId Int
+  customerId  Int
+  date        DateTime @default(now())
+  type        String
+  amount      Float
+  description String?
+  referenceId String?
+  balance     Float
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  customer     Customer     @relation(fields: [customerId], references: [id], onDelete: Cascade)
+}
+
+model SupplierLedgerEntry {
+  id          Int      @id @default(autoincrement())
+  organizationId Int
+  supplierId  Int
+  date        DateTime @default(now())
+  type        String
+  amount      Float
+  description String?
+  referenceId String?
+  balance     Float
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  supplier     Supplier     @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+}
+
+model Payment {
+  id              Int      @id @default(autoincrement())
+  organizationId Int
+  branchId        Int
+  date            DateTime @default(now())
+  type            String
+  paymentMethod   String
+  amount          Float
+  referenceNumber String?
+  notes           String?
+
+  customerId    Int?
+  supplierId    Int?
+  invoiceNumber String?
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  branch       Branch       @relation(fields: [branchId], references: [id])
+  customer     Customer?    @relation(fields: [customerId], references: [id])
+  supplier     Supplier?    @relation(fields: [supplierId], references: [id])
+}
+
+// === INVOICING & TRACEABILITY ===
+model PurchaseInvoice {
+  id            Int      @id @default(autoincrement())
+  organizationId Int
+  branchId      Int
+  invoiceNumber String
+  supplierId    Int
+  supplierPhone String?
+  warehouseId   Int
+  invoiceDate   DateTime @default(now())
+  totalAmount   Float    @default(0)
+  discount      Float    @default(0)
+  netAmount     Float    @default(0)
+  paidAmount    Float    @default(0)
+  status        String   @default("RECEIVED")
+  notes         String?
+
+  organization Organization          @relation(fields: [organizationId], references: [id])
+  branch       Branch                @relation(fields: [branchId], references: [id])
+  supplier     Supplier              @relation(fields: [supplierId], references: [id])
+  warehouse    Warehouse             @relation(fields: [warehouseId], references: [id])
+  items        PurchaseInvoiceItem[]
+  
+  @@unique([organizationId, invoiceNumber])
+}
+
+model PurchaseInvoiceItem {
+  id            Int   @id @default(autoincrement())
+  organizationId Int
+  invoiceId     Int
+  productId     Int
+  batchId       Int
+  quantity      Int   @default(0)
+  bonus         Int   @default(0)
+  purchasePrice Float @default(0)
+  subtotal      Float @default(0)
+
+  organization Organization    @relation(fields: [organizationId], references: [id])
+  invoice      PurchaseInvoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  product      Product         @relation(fields: [productId], references: [id])
+  batch        Batch           @relation(fields: [batchId], references: [id])
+}
+
+model SalesInvoice {
+  id            Int      @id @default(autoincrement())
+  organizationId Int
+  branchId      Int
+  warehouseId   Int
+  customerId    Int
+  salesmanId    Int?
+  invoiceNumber String
+  invoiceDate   DateTime @default(now())
+  saleType      String   @default("retail")
+  totalAmount   Float    @default(0)
+  discount      Float    @default(0)
+  netAmount     Float    @default(0)
+  paidAmount    Float    @default(0)
+  status        String   @default("COMPLETED")
+
+  organization Organization       @relation(fields: [organizationId], references: [id])
+  branch       Branch             @relation(fields: [branchId], references: [id])
+  warehouse    Warehouse          @relation(fields: [warehouseId], references: [id])
+  customer     Customer           @relation(fields: [customerId], references: [id])
+  salesman     Salesman?          @relation(fields: [salesmanId], references: [id])
+  items        SalesInvoiceItem[]
+
+  @@unique([organizationId, invoiceNumber])
+}
+
+model SalesInvoiceItem {
+  id            Int   @id @default(autoincrement())
+  organizationId Int
+  invoiceId     Int
+  productId     Int
+  batchId       Int
+  quantity      Int
+  salePrice     Float
+  purchasePrice Float @default(0)
+  subtotal      Float @default(0)
+
+  organization Organization   @relation(fields: [organizationId], references: [id])
+  invoice      SalesInvoice   @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  product      Product        @relation(fields: [productId], references: [id])
+  batch        Batch          @relation(fields: [batchId], references: [id])
+}
+
+model Settings {
+  id             Int      @id @default(autoincrement())
+  organizationId Int      @unique
+  useApi         Boolean  @default(true)
+  apiUrl         String?
+  excelPath      String?
+  createdAt      DateTime @default(now())
+
+  // Company / Organization Profile
+  companyName    String?
+  companyContact String?
+  companyPhone   String?
+  companyEmail   String?
+  companyAddress String?
+  companyCity    String?
+
+  // Invoice Settings
+  invoiceHeader  String?
+  invoiceFooter  String?
+  invoicePrefix  String?  @default("INV")
+  invoiceTax     String?  @default("0")
+  currency       String?  @default("PKR")
+  invoiceShowLogo Boolean @default(true)
+
+  // Alert Settings
+  alertExpiryDays    String? @default("30")
+  alertStockThreshold String? @default("10")
+  alertEmailEnabled  Boolean @default(false)
+  alertEmail         String?
+
+  // Appearance
+  theme          String?  @default("light")
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+}
+
+model AuditLog {
+  id        Int      @id @default(autoincrement())
+  organizationId Int
+  userId    Int?
+  action    String
+  tableName String?
+  recordId  Int?
+  details   String?
+  timestamp DateTime @default(now())
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  user         User?        @relation(fields: [userId], references: [id])
+}
