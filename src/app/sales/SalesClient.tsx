@@ -1,8 +1,9 @@
 'use client';
 
 import { useState, useEffect, useMemo } from 'react';
+import { useRouter } from 'next/navigation';
 import { Plus, Search, Filter, Eye, FileText, Printer, Download, CreditCard, RotateCcw, X, Trash2, Package, CheckCircle2, ShoppingCart, User as UserIcon, Save } from 'lucide-react';
-import { createSalesInvoice, getProductsWithStock } from './actions';
+import { createSalesInvoice, getProductsWithStock, deleteSalesInvoice } from './actions';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { SearchableProductDropdown } from '@/components/SearchableProductDropdown';
@@ -60,6 +61,7 @@ export function SalesClient({
   const [customerFilter, setCustomerFilter] = useState('');
   const [saleTypeFilter, setSaleTypeFilter] = useState('');
   const { symbol } = useCurrency();
+  const router = useRouter();
 
   // New Sale Form State
   const [saleData, setSaleData] = useState({
@@ -203,20 +205,22 @@ export function SalesClient({
   };
 
   const handleNewSale = () => {
-    setViewMode('form');
-    setSaleData({ 
-      saleType: 'retail', 
-      customerId: '', 
-      warehouseId: warehouses[0]?.id?.toString() || '', 
-      salesmanId: '', 
-      paymentMethod: 'CASH', 
-      isCredit: false,
-      discount: '0',
-      discountType: 'flat'
-    });
-    setItems([]);
-    setPaidAmount('0');
-    setSuccess(false);
+    router.push('/sales/new');
+  };
+
+  const handleDeleteInvoice = async (invoiceId: number) => {
+    if (!window.confirm('Delete this invoice? This will restore stock and reverse ledger entries.')) return;
+    try {
+      const result = await deleteSalesInvoice(invoiceId);
+      if (result.success) {
+        setInvoices(invoices.filter(inv => inv.id !== invoiceId));
+        alert('Invoice deleted successfully');
+      } else {
+        alert('Failed to delete invoice: ' + result.error);
+      }
+    } catch (error) {
+      alert('Error deleting invoice');
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -245,7 +249,7 @@ export function SalesClient({
       const discValue = parseFloat(saleData.discount) || 0;
       const discountAmount = saleData.discountType === 'percentage' ? (grossTotal * discValue) / 100 : discValue;
       
-      await createSalesInvoice({
+      const result = await createSalesInvoice({
         customerId: parseInt(saleData.customerId),
         salesmanId: saleData.salesmanId ? parseInt(saleData.salesmanId) : undefined,
         warehouseId: parseInt(saleData.warehouseId),
@@ -266,7 +270,7 @@ export function SalesClient({
       
       if (saleData.saleType === 'retail') {
         setPrintData({
-          invoiceNumber: result.invoice.invoiceNumber,
+          invoiceNumber: result.invoice?.invoiceNumber || 'N/A',
           date: new Date().toLocaleString(),
           items: items.map(it => {
             const prod = products.find(p => p.id.toString() === it.productId);
@@ -276,7 +280,7 @@ export function SalesClient({
           discount: parseFloat(saleData.discount),
           netTotal: calculateNetAmount(),
           paidAmount: calculateNetAmount(),
-          settings: settings || {}
+          settings: {}
         });
         
         setTimeout(() => {
@@ -693,12 +697,13 @@ export function SalesClient({
                 <th className="px-6 py-4 text-right">Net Amount</th>
                 <th className="px-6 py-4 text-right">Paid</th>
                 <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4 text-center">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100 dark:divide-slate-700">
               {filteredInvoices.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
+                  <td colSpan={9} className="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
                     <FileText className="w-10 h-10 mx-auto mb-3 opacity-30" />
                     <p>No sales records found matching your criteria</p>
                   </td>
@@ -717,6 +722,20 @@ export function SalesClient({
                       <td className="px-6 py-4 text-right font-bold text-slate-800 dark:text-white">{symbol}{inv.netAmount.toFixed(2)}</td>
                       <td className="px-6 py-4 text-right text-emerald-600 dark:text-emerald-400 font-bold">{symbol}{inv.paidAmount.toFixed(2)}</td>
                       <td className="px-6 py-4">{getStatusBadge(inv.status)}</td>
+                      <td className="px-6 py-4 text-center">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (confirm(`Delete invoice ${inv.invoiceNumber}?`)) {
+                              handleDeleteInvoice(inv.id);
+                            }
+                          }}
+                          className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                          title="Delete Invoice"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </td>
                     </tr>
                   );
                 })

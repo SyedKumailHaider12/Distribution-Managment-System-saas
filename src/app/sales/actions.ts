@@ -62,7 +62,11 @@ export async function getSalesInvoiceById(id: number) {
       customer: true,
       salesman: true,
       warehouse: true,
-      branch: true,
+      branch: {
+        include: {
+          organization: true,
+        },
+      },
       items: {
         include: {
           product: true,
@@ -75,7 +79,7 @@ export async function getSalesInvoiceById(id: number) {
 
 export async function createSalesInvoice(data: {
   customerId?: number;
-  salesmanId?: number;
+  salesmanId: number;
   warehouseId: number;
   branchId: number;
   saleType: 'retail' | 'distribution';
@@ -130,8 +134,18 @@ export async function createSalesInvoice(data: {
   }
 
   // Generate invoice number
-  const count = await prisma.salesInvoice.count({ where: { organizationId } });
-  const invoiceNumber = `INV-${new Date().getFullYear()}-${String(count + 1).padStart(5, '0')}`;
+  const date = new Date();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  
+  // Count invoices by type
+  const count = await prisma.salesInvoice.count({ 
+    where: { organizationId, saleType } 
+  });
+  
+  const invoiceNumber = saleType === 'retail'
+    ? `INV-R${String(count + 1).padStart(3, '0')}/${month}/${year}`
+    : `INV-D.${String(count + 1).padStart(3, '0')}/${month}/${year}`;
 
   const result = await prisma.$transaction(async (tx) => {
     const invoice = await tx.salesInvoice.create({
@@ -282,16 +296,16 @@ export async function getSalesmen() {
   if (!session) throw new Error('Unauthorized');
   return prisma.salesman.findMany({
     where: { organizationId: session.organizationId },
-    include: { employee: true },
+    include: { employee: { select: { name: true } } },
     orderBy: { name: 'asc' },
   });
 }
 
-export async function getWarehouses(branchId: number) {
+export async function getWarehouses() {
   const session = await getSession();
   if (!session) throw new Error('Unauthorized');
   return prisma.warehouse.findMany({
-    where: { branchId, organizationId: session.organizationId },
+    where: { organizationId: session.organizationId },
     orderBy: { name: 'asc' },
   });
 }
@@ -330,4 +344,178 @@ export async function getProductsWithStock(warehouseId: number) {
       })).filter((b) => b.quantity > 0),
     };
   }).filter((p) => p.totalStock > 0); // Only return products with stock
+}
+
+
+// Draft Sales
+export async function saveDraftSale(data: {
+  customerId?: number;
+  salesmanId?: number;
+  warehouseId?: number;
+  saleType: 'retail' | 'distribution';
+  items: any[];
+  discount: number;
+  discountType: string;
+  notes?: string;
+}) {
+  const session = await getSession();
+  if (!session) throw new Error('Unauthorized');
+
+  const draft = await prisma.draftSale.create({
+    data: {
+      organizationId: session.organizationId,
+      userId: session.id,
+      customerId: data.customerId,
+      salesmanId: data.salesmanId,
+      warehouseId: data.warehouseId,
+      saleType: data.saleType,
+      items: JSON.stringify(data.items),
+      discount: data.discount,
+      discountType: data.discountType,
+      notes: data.notes,
+    },
+  });
+
+  revalidatePath('/sales/new');
+  return draft;
+}
+
+export async function getDraftSales() {
+  const session = await getSession();
+  if (!session) throw new Error('Unauthorized');
+
+  return prisma.draftSale.findMany({
+    where: {
+      organizationId: session.organizationId,
+      userId: session.id,
+    },
+    orderBy: { updatedAt: 'desc' },
+  });
+}
+
+export async function getDraftSaleById(id: number) {
+  const session = await getSession();
+  if (!session) throw new Error('Unauthorized');
+
+  const draft = await prisma.draftSale.findUnique({
+    where: {
+      id,
+      organizationId: session.organizationId,
+      userId: session.id,
+    },
+  });
+
+  if (!draft) return null;
+
+  return {
+    ...draft,
+    items: JSON.parse(draft.items),
+  };
+}
+
+export async function deleteDraftSale(id: number) {
+  const session = await getSession();
+  if (!session) throw new Error('Unauthorized');
+
+  await prisma.draftSale.delete({
+    where: {
+      id,
+      organizationId: session.organizationId,
+      userId: session.id,
+    },
+  });
+
+  revalidatePath('/sales/new');
+}
+
+export async function deleteSalesInvoice(invoiceId: number) {
+  const session = await getSession();
+  if (!session) return { success: false, error: 'Unauthorized' };
+  if (session.role.toLowerCase() !== 'admin') {
+    return { success: false, error: 'Only admins can delete invoices' };
+  }
+
+  const organizationId = session.organizationId;
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      // 1. Fetch invoice with items
+      const invoice = await tx.salesInvoice.findUnique({
+        where: { id: invoiceId, organizationId },
+        include: { items: true },
+      });
+      if (!invoice) throw new Error('Invoice not found');
+
+      // 2. Restore stock for each item
+      for (const item of invoice.items) {
+        const stock = await tx.stock.findUnique({
+          where: {
+            organizationId_warehouseId_productId_batchId: {
+              organizationId,
+              warehouseId: invoice.warehouseId,
+              productId: item.productId,
+              batchId: item.batchId,
+            },
+          },
+        });
+        if (stock) {
+          await tx.stock.update({
+            where: { id: stock.id },
+            data: { quantity: { increment: item.quantity } },
+          });
+        } else {
+          await tx.stock.create({
+            data: {
+              organizationId,
+              warehouseId: invoice.warehouseId,
+              productId: item.productId,
+              batchId: item.batchId,
+              quantity: item.quantity,
+            },
+          });
+        }
+      }
+
+      // 3. Reverse customer ledger (distribution only)
+      if (invoice.saleType === 'distribution') {
+        const lastEntry = await tx.customerLedgerEntry.findFirst({
+          where: { customerId: invoice.customerId, organizationId },
+          orderBy: { date: 'desc' },
+        });
+        await tx.customerLedgerEntry.create({
+          data: {
+            organizationId,
+            customerId: invoice.customerId,
+            type: 'CREDIT',
+            amount: invoice.netAmount,
+            description: `DELETED Sale Invoice: ${invoice.invoiceNumber}`,
+            referenceId: invoice.invoiceNumber,
+            balance: (lastEntry?.balance || 0) - invoice.netAmount,
+          },
+        });
+      }
+
+      // 4. Delete the invoice (cascade deletes items)
+      await tx.salesInvoice.delete({ where: { id: invoiceId, organizationId } });
+
+      // 5. Audit log
+      await tx.auditLog.create({
+        data: {
+          organizationId,
+          userId: session.id,
+          action: 'DELETE',
+          tableName: 'SalesInvoice',
+          recordId: invoiceId,
+          details: `Deleted ${invoice.saleType} invoice ${invoice.invoiceNumber} worth ${invoice.netAmount}`,
+        },
+      });
+    });
+
+    revalidatePath('/sales');
+    revalidatePath('/stock');
+    return { success: true };
+  } catch (error: any) {
+    console.error('Sales invoice delete error:', error);
+    return { success: false, error: error.message };
+  }
 }

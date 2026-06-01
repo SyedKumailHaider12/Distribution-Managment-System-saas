@@ -1,6 +1,203 @@
-  sale window k jo product add wala area ha usa redesign karna ha us ma top section same as it is raha ga product add wala area ma
-  kuch input box hn ga name ,quantity ,flat discount , aik jis ma item ki price load ho k aa gi, batch info aik ma load ho gi  and
-  aik jiss ma uni price subtotl and add to cart add to cart button click karna pa aitem table view ma jaa gi instead of each time
-  clickcking add product for new item , and in name input jo name user type kara ga us ki dropdown show ho gi user select kara ga
-  baki value autofil hn gi and quantiy and discount user add kar k add kara ga and jo bottom panel ha woh tableview sa bi nicha ho ga
-  same asit is but gap ho ga us k or table view k and table view k or add item to cart section k .
+
+================================================================================
+IMPLEMENTATION PLAN
+================================================================================
+
+FEATURE: Dual Invoice Printing System
+  - Retail Sale  → 3-inch (80mm) Thermal Slip
+  - Distribution Sale → A4 Standard Invoice
+
+================================================================================
+PART 1 — INVOICE NUMBER FORMAT FIX
+================================================================================
+
+File: src/app/sales/actions.ts  (createSalesInvoice function)
+
+Current:  INV-2026-00001
+Required:
+  Retail:       INV-R001/05/2026
+  Distribution: INV-D.001/05/2026
+
+Steps:
+  1. Count retail invoices separately from distribution invoices.
+  2. Build invoice number based on saleType:
+       retail       → `INV-R${padded_count}/MM/YYYY`
+       distribution → `INV-D.${padded_count}/MM/YYYY`
+  3. Use current month/year from invoiceDate at time of creation.
+
+================================================================================
+PART 2 — RETAIL THERMAL SLIP (3-inch / 80mm)
+================================================================================
+
+New File: src/components/print/RetailThermalSlip.tsx
+
+Layout (width: 3 inches = 72mm, auto-adjusts to thermal printer):
+  ┌─────────────────────────────┐
+  │   [LOGO if enabled]         │
+  │   ORGANIZATION NAME         │  ← from Organization.name
+  │   Address | Phone | Email   │  ← from Organization fields
+  │   ─────────────────────     │
+  │   RETAIL INVOICE            │
+  │   ─────────────────────     │
+  │   Invoice: INV-R001/05/2026 │
+  │   Date: 31-May-2026  Time   │
+  │   Cashier: [user fullName]  │
+  │   ─────────────────────     │
+  │   Item Name      Qty  Amt   │
+  │   ─────────────────────     │
+  │   [items rows]              │
+  │   ─────────────────────     │
+  │   Gross Total:    XXXX      │
+  │   Discount:      -XXXX      │
+  │   NET TOTAL:      XXXX      │
+  │   Paid:           XXXX      │
+  │   Change:         XXXX      │
+  │   ─────────────────────     │
+  │   Return Policy:            │  ← from Settings.invoiceFooter
+  │   [footer text]             │
+  │   ─────────────────────     │
+  │   Thank you for shopping!   │
+  │   Powered by AzanTech DMS   │
+  └─────────────────────────────┘
+
+Implementation notes:
+  - Pure HTML/CSS component, no PDF library needed.
+  - Use @media print CSS: width 72mm, hide everything else.
+  - Font: monospace, font-size 11-12px.
+  - Use CSS class "print-only" shown only during window.print().
+  - Auto word-wrap for long product names.
+  - Greeting message configurable via Settings.invoiceHeader.
+  - Return policy from Settings.invoiceFooter.
+
+================================================================================
+PART 3 — DISTRIBUTION A4 INVOICE PDF
+================================================================================
+
+New File: src/components/print/DistributionInvoicePDF.tsx
+  (using @react-pdf/renderer — already installed for PurchaseInvoicePDF)
+
+Layout (A4 page, portrait):
+
+  ┌──────────────────────────────────────────────────────┐
+  │  [LOGO]   ORGANIZATION NAME (large, bold)            │
+  │           Address | Phone | Email | Website          │
+  │           Tax ID                                     │
+  │  ────────────────────────────────────────────────    │
+  │  ┌─────────────────────┐  ┌─────────────────────┐   │
+  │  │  INVOICE INFO       │  │  DATE & NUMBER      │   │
+  │  │  Invoice: INV-D.001 │  │  Date: 31-May-2026  │   │
+  │  │  /05/2026           │  │  Time: 14:30        │   │
+  │  │  Status: PAID       │  │  Invoice #: ...     │   │
+  │  └─────────────────────┘  └─────────────────────┘   │
+  │                                                      │
+  │  TO: [Customer Name]                                 │
+  │      [Customer Address]                              │
+  │      [Customer Phone]                                │
+  │      Salesman: [Salesman Name]                       │
+  │                                                      │
+  │  ┌──────────────────────────────────────────────┐   │
+  │  │ # │ Product │ Batch │ Qty │ Rate │ Subtotal  │   │
+  │  │───┼─────────┼───────┼─────┼──────┼──────────│   │
+  │  │ 1 │ ...     │ ...   │ ... │ ...  │ ...      │   │
+  │  └──────────────────────────────────────────────┘   │
+  │                                                      │
+  │                        Gross Total:  XXXX            │
+  │                        Discount:    -XXXX            │
+  │                        NET TOTAL:    XXXX            │
+  │                        Paid:         XXXX            │
+  │                        Balance Due:  XXXX            │
+  │                                                      │
+  │  ────────────────────────────────────────────────    │
+  │  Prepared By: ________   Checked By: ________        │
+  │  Stamp: [  ]                                         │
+  │                                                      │
+  │  ────────────────────────────────────────────────    │
+  │  Powered by AzanTech DMS • Software Excellence       │
+  └──────────────────────────────────────────────────────┘
+
+Implementation notes:
+  - Reuse style patterns from PurchaseInvoicePDF.tsx.
+  - Logo: use Organization.logoUrl if invoiceShowLogo = true.
+  - Two info boxes side by side (invoice info left, date/number right).
+  - "TO:" customer block below info boxes.
+  - Items table with serial number column.
+  - Summary section right-aligned.
+  - Signature section: "Prepared By", "Checked By", "Stamp" placeholders.
+  - Footer branding fixed at bottom.
+
+================================================================================
+PART 4 — PRINT TRIGGER INTEGRATION
+================================================================================
+
+File: src/app/sales/SalesClient.tsx
+
+After successful createSalesInvoice():
+  - Retail:
+      1. Fetch full invoice data (with org info) using getSalesInvoiceById().
+      2. Render <RetailThermalSlip> with invoice data.
+      3. Call window.print() — CSS @media print hides everything except slip.
+  - Distribution:
+      1. Fetch full invoice data.
+      2. Use @react-pdf/renderer's pdf() to generate blob.
+      3. Open in new tab via URL.createObjectURL() for print/download.
+
+File: src/app/sales/new/page.tsx
+  - Wire the existing "Print" button to same logic above.
+  - After sale completes, show print modal/preview before redirecting.
+
+================================================================================
+PART 5 — SETTINGS SUPPORT
+================================================================================
+
+File: src/app/settings/page.tsx (or SettingsClient.tsx)
+  - Ensure these fields are editable in the Settings UI:
+      invoiceHeader  → Greeting message on retail slip
+      invoiceFooter  → Return policy text on retail slip
+      invoiceShowLogo → Toggle logo on/off
+      currency       → Used in both slip and invoice
+
+  - These already exist in the Settings model — just verify they are
+    exposed in the settings form and saved correctly.
+
+================================================================================
+PART 6 — API ROUTE FOR INVOICE DATA (optional but recommended)
+================================================================================
+
+New File: src/app/api/sales/[id]/route.ts
+  - GET handler: returns full SalesInvoice with all relations
+    (customer, salesman, branch, warehouse, items with product+batch, org info).
+  - Used by client-side print components to fetch data after sale creation.
+
+  Alternative: pass invoice data directly from createSalesInvoice() return value
+  and fetch org/settings separately — avoids new API route.
+
+================================================================================
+IMPLEMENTATION ORDER
+================================================================================
+
+Step 1: Fix invoice number format in actions.ts
+Step 2: Create RetailThermalSlip.tsx component
+Step 3: Create DistributionInvoicePDF.tsx component
+Step 4: Update SalesClient.tsx to trigger correct print after sale
+Step 5: Update sales/new/page.tsx Print button
+Step 6: Verify Settings fields are wired correctly
+Step 7: Test both print flows end-to-end
+
+================================================================================
+FILES TO CREATE / MODIFY
+================================================================================
+
+CREATE:
+  src/components/print/RetailThermalSlip.tsx
+  src/components/print/DistributionInvoicePDF.tsx
+
+MODIFY:
+  src/app/sales/actions.ts          → invoice number format
+  src/app/sales/SalesClient.tsx     → print trigger after sale
+  src/app/sales/new/page.tsx        → wire Print button
+
+VERIFY (no change expected):
+  src/app/settings/ (SettingsClient) → invoiceHeader/Footer fields
+  prisma/schema.prisma               → Settings model already has needed fields
+
+================================================================================

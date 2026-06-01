@@ -127,6 +127,29 @@ export async function createCustomerReturn(data: {
     }
   }
 
+  // Update invoice status and amounts
+  const fullInvoice = await prisma.salesInvoice.findUnique({
+    where: { id: invoiceId },
+    include: { items: true },
+  });
+
+  if (fullInvoice) {
+    const totalReturnedQty = items.reduce((sum, item) => sum + item.quantity, 0);
+    const totalInvoiceQty = fullInvoice.items.reduce((sum, item) => sum + item.quantity, 0);
+    
+    // Check if full return or partial
+    const isFullReturn = totalReturnedQty >= totalInvoiceQty;
+    
+    await prisma.salesInvoice.update({
+      where: { id: invoiceId },
+      data: {
+        status: isFullReturn ? 'RETURNED' : 'PARTIAL_RETURN',
+        netAmount: { decrement: totalAmount },
+        paidAmount: { decrement: totalAmount },
+      },
+    });
+  }
+
   // Audit log
   await prisma.auditLog.create({
     data: {

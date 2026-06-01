@@ -114,6 +114,44 @@ export async function createPurchaseReturn(data: {
     }
   }
 
+  // Update purchase invoice status
+  const fullInvoice = await prisma.purchaseInvoice.findUnique({
+    where: { id: invoiceId },
+    include: { items: true },
+  });
+  if (fullInvoice) {
+    const totalReturnedQty = items.reduce((sum, item) => sum + item.quantity, 0);
+    const totalInvoiceQty = fullInvoice.items.reduce((sum, item) => sum + item.quantity + item.bonus, 0);
+    const isFullReturn = totalReturnedQty >= totalInvoiceQty;
+    await prisma.purchaseInvoice.update({
+      where: { id: invoiceId },
+      data: { status: isFullReturn ? 'RETURNED' : fullInvoice.status },
+    });
+  }
+
+  // Supplier ledger — DEBIT (we owe supplier less now)
+  const fullInvoiceForLedger = await prisma.purchaseInvoice.findUnique({
+    where: { id: invoiceId },
+    select: { supplierId: true, invoiceNumber: true },
+  });
+  if (fullInvoiceForLedger) {
+    const lastEntry = await prisma.supplierLedgerEntry.findFirst({
+      where: { supplierId: fullInvoiceForLedger.supplierId, organizationId: session.organizationId },
+      orderBy: { date: 'desc' },
+    });
+    await prisma.supplierLedgerEntry.create({
+      data: {
+        organizationId: session.organizationId,
+        supplierId: fullInvoiceForLedger.supplierId,
+        type: 'DEBIT',
+        amount: totalAmount,
+        description: `Purchase Return from Invoice: ${fullInvoiceForLedger.invoiceNumber}. Reason: ${reason || 'N/A'}`,
+        referenceId: fullInvoiceForLedger.invoiceNumber,
+        balance: (lastEntry?.balance || 0) - totalAmount,
+      },
+    });
+  }
+
   // Audit log
   await prisma.auditLog.create({
     data: {
@@ -127,5 +165,6 @@ export async function createPurchaseReturn(data: {
   });
 
   revalidatePath('/returns/purchase');
+  revalidatePath('/purchases');
   return purchaseReturn;
 }

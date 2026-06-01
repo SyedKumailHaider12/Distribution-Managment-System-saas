@@ -7,6 +7,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { pdf } from '@react-pdf/renderer';
 import PurchaseInvoicePDF from './PurchaseInvoicePDF';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import BarcodeInput from '@/components/BarcodeInput';
 
 // Utility for file downloads
 const saveAs = (blob: Blob, fileName: string) => {
@@ -118,15 +119,27 @@ export default function PurchasesClient({
     categoryId: '',
     batchNumber: '',
     expiryDate: '',
-    quantity: '1',
-    bonus: '0',
-    purchasePrice: '0',
+    // Packing fields
+    packQty: '1',        // Number of boxes/packs from invoice
+    packSize: '1',       // Units per box/pack (e.g. 30 for "30's")
+    boxPrice: '0',       // Price per box/pack (what's on the invoice)
+    // Derived — auto-calculated, stored for stock
+    quantity: '1',       // Total units = packQty × packSize
+    bonus: '0',          // Bonus units (smallest unit)
+    purchasePrice: '0',  // Per-unit price = boxPrice ÷ packSize
+    // Sale prices — always stored as per-unit in DB
     salePriceRetail: '0',
     salePriceDistribution: '0',
+    // Raw input fields when user enters pack price
+    salePriceRetailPack: '0',
+    salePriceDistributionPack: '0',
     discount: '0',
     isNewProduct: false
   };
   const [currentItem, setCurrentItem] = useState(initialItemState);
+  // 'unit' = user enters per-unit price directly
+  // 'pack' = user enters per-pack price, system divides by packSize
+  const [salePriceMode, setSalePriceMode] = useState<'unit' | 'pack'>('unit');
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -203,27 +216,42 @@ export default function PurchasesClient({
     })
   }
 
-  // Optimized Search with Debounce
+  // Optimized Search with Debounce + AbortController to cancel stale requests
   useEffect(() => {
+    if (currentItem.productName.length < 2) {
+      setSuggestions([]);
+      setShowSuggestions(false);
+      setIsSearching(false);
+      return;
+    }
+
+    const controller = new AbortController();
+
     const timer = setTimeout(async () => {
-      if (currentItem.productName.length >= 2) {
-        setIsSearching(true);
-        try {
-          const res = await fetch(`/api/products/search?q=${encodeURIComponent(currentItem.productName)}`);
-          const data = await res.json();
-          setSuggestions(data);
-          setShowSuggestions(true);
-        } catch (err) {
-          console.error("Search failed", err);
-        } finally {
-          setIsSearching(false);
+      setIsSearching(true);
+      try {
+        const res = await fetch(
+          `/api/products/search?q=${encodeURIComponent(currentItem.productName)}`,
+          { signal: controller.signal }
+        );
+        if (!res.ok) throw new Error('Search failed');
+        const data = await res.json();
+        setSuggestions(data);
+        setShowSuggestions(true);
+      } catch (err: any) {
+        // Ignore abort errors — they're expected when user keeps typing
+        if (err.name !== 'AbortError') {
+          console.error('Search failed', err);
         }
-      } else {
-        setSuggestions([]);
-        setShowSuggestions(false);
+      } finally {
+        setIsSearching(false);
       }
-    }, 300); // 300ms debounce
-    return () => clearTimeout(timer);
+    }, 200); // 200ms debounce — fast because server now uses in-memory cache
+
+    return () => {
+      clearTimeout(timer);
+      controller.abort(); // Cancel any in-flight request when query changes
+    };
   }, [currentItem.productName]);
 
   const selectSuggestion = (s: any) => {
@@ -245,13 +273,37 @@ export default function PurchasesClient({
       alert("Please enter product name");
       return;
     }
-    const newItem = {
+
+    // Derive totals from packing fields
+    const packQty = Number(currentItem.packQty) || 1;
+    const packSize = Number(currentItem.packSize) || 1;
+    const boxPrice = Number(currentItem.boxPrice) || 0;
+    const perUnitPrice = packSize > 0 ? boxPrice / packSize : 0;
+    const totalUnits = packQty * packSize;
+
+    // Resolve per-unit sale prices based on mode
+    let perUnitRetail: number;
+    let perUnitDistribution: number;
+    if (salePriceMode === 'pack' && packSize > 1) {
+      perUnitRetail = (Number(currentItem.salePriceRetailPack) || 0) / packSize;
+      perUnitDistribution = (Number(currentItem.salePriceDistributionPack) || 0) / packSize;
+    } else {
+      perUnitRetail = Number(currentItem.salePriceRetail) || 0;
+      perUnitDistribution = Number(currentItem.salePriceDistribution) || 0;
+    }
+
+    const finalItem = {
       ...currentItem,
+      quantity: totalUnits.toString(),
+      purchasePrice: perUnitPrice.toFixed(4),
+      salePriceRetail: perUnitRetail.toFixed(4),
+      salePriceDistribution: perUnitDistribution.toFixed(4),
       id: Date.now(),
       categoryId: currentItem.categoryId || invoiceData.categoryId,
-      subtotal: calculateItemSubtotal(currentItem)
     };
-    setItems([...items, newItem]);
+    finalItem.subtotal = calculateItemSubtotal(finalItem);
+
+    setItems([...items, finalItem]);
     setCurrentItem({ ...initialItemState, categoryId: invoiceData.categoryId });
     setSuggestions([]);
     setShowSuggestions(false);
@@ -263,6 +315,22 @@ export default function PurchasesClient({
     const price = Number(item.purchasePrice) || 0;
     return (qty * price) - (qty * price * disc / 100);
   };
+
+  // Live packing calculation for display in the form
+  const packQtyNum = Number(currentItem.packQty) || 0;
+  const packSizeNum = Number(currentItem.packSize) || 1;
+  const boxPriceNum = Number(currentItem.boxPrice) || 0;
+  const derivedTotalUnits = packQtyNum * packSizeNum;
+  const derivedPerUnitPrice = packSizeNum > 0 ? boxPriceNum / packSizeNum : 0;
+  const derivedSubtotal = (derivedTotalUnits + (Number(currentItem.bonus) || 0)) * derivedPerUnitPrice * (1 - (Number(currentItem.discount) || 0) / 100);
+
+  // Live sale price derivation
+  const derivedRetailPerUnit = salePriceMode === 'pack' && packSizeNum > 1
+    ? (Number(currentItem.salePriceRetailPack) || 0) / packSizeNum
+    : Number(currentItem.salePriceRetail) || 0;
+  const derivedDistributionPerUnit = salePriceMode === 'pack' && packSizeNum > 1
+    ? (Number(currentItem.salePriceDistributionPack) || 0) / packSizeNum
+    : Number(currentItem.salePriceDistribution) || 0;
 
   const calculateTotal = () => {
     return items.reduce((sum, item) => sum + item.subtotal, 0);
@@ -346,6 +414,10 @@ export default function PurchasesClient({
       categoryId: item.product.categoryId?.toString() || '',
       batchNumber: item.batch?.batchNumber || '',
       expiryDate: item.batch?.expiryDate ? new Date(item.batch.expiryDate).toISOString().split('T')[0] : '',
+      // When editing, we don't have original packing info — show as 1 pack = all units
+      packQty: item.quantity.toString(),
+      packSize: '1',
+      boxPrice: item.purchasePrice.toString(),
       quantity: item.quantity.toString(),
       bonus: item.bonus.toString(),
       purchasePrice: item.purchasePrice.toString(),
@@ -510,14 +582,25 @@ export default function PurchasesClient({
             <div className="space-y-8">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="space-y-2 relative" ref={searchRef}>
-                  <label className="flex items-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-300"><Tag className="w-4 h-4 text-indigo-500" /> Product Name</label>
+                  <label className="flex items-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-300"><Tag className="w-4 h-4 text-indigo-500" /> Product Name / Barcode</label>
                   <div className="relative">
-                    <input 
-                      type="text" 
-                      placeholder="Type at least 2 chars..." 
-                      className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium" 
-                      value={currentItem.productName} 
-                      onChange={(e) => setCurrentItem({...currentItem, productName: e.target.value})} 
+                    <BarcodeInput
+                      value={currentItem.productName}
+                      onChange={(value) => setCurrentItem({...currentItem, productName: value})}
+                      onScan={(barcode) => {
+                        const product = products.find((p: any) => p.barcode === barcode);
+                        if (product) {
+                          selectSuggestion({
+                            id: product.id,
+                            name: product.name,
+                            genericName: product.genericName,
+                            categoryId: product.categoryId,
+                            source: 'db'
+                          });
+                        }
+                      }}
+                      placeholder="Type product name or scan barcode..."
+                      className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-medium"
                     />
                     {isSearching && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-indigo-500 animate-spin" />}
                   </div>
@@ -559,7 +642,7 @@ export default function PurchasesClient({
                 )}
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                 <div className="space-y-2">
                   <label className="flex items-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-300"><Hash className="w-4 h-4 text-blue-500" /> Batch Number</label>
                   <input disabled={!needsBatch} type="text" className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm disabled:opacity-30" value={currentItem.batchNumber} onChange={(e) => setCurrentItem({...currentItem, batchNumber: e.target.value})} />
@@ -568,32 +651,212 @@ export default function PurchasesClient({
                   <label className="flex items-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-300"><Calendar className="w-4 h-4 text-orange-500" /> Expiry Date</label>
                   <input disabled={!needsBatch} type="date" className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm disabled:opacity-30" value={currentItem.expiryDate} onChange={(e) => setCurrentItem({...currentItem, expiryDate: e.target.value})} />
                 </div>
+                {/* Qty of boxes/packs from invoice */}
                 <div className="space-y-2">
-                  <label className="flex items-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-300"><ShoppingCart className="w-4 h-4 text-emerald-500" /> Quantity</label>
-                  <input type="number" className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm" value={currentItem.quantity} onChange={(e) => setCurrentItem({...currentItem, quantity: e.target.value})} />
+                  <label className="flex items-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-300">
+                    <ShoppingCart className="w-4 h-4 text-emerald-500" /> Qty <span className="text-[10px] font-normal text-slate-400">(boxes/packs)</span>
+                  </label>
+                  <input
+                    type="number" min="1"
+                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold"
+                    value={currentItem.packQty}
+                    onChange={(e) => setCurrentItem({...currentItem, packQty: e.target.value})}
+                  />
                 </div>
+                {/* Bonus in smallest unit */}
                 <div className="space-y-2">
-                  <label className="flex items-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-300"><Plus className="w-4 h-4 text-emerald-400" /> Bonus Quantity</label>
-                  <input type="number" className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm" value={currentItem.bonus} onChange={(e) => setCurrentItem({...currentItem, bonus: e.target.value})} />
+                  <label className="flex items-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-300">
+                    <Plus className="w-4 h-4 text-emerald-400" /> Bonus <span className="text-[10px] font-normal text-slate-400">(units)</span>
+                  </label>
+                  <input
+                    type="number" min="0"
+                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm"
+                    value={currentItem.bonus}
+                    onChange={(e) => setCurrentItem({...currentItem, bonus: e.target.value})}
+                  />
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
+                {/* Pack size */}
                 <div className="space-y-2">
-                  <label className="flex items-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-300"><DollarSign className="w-4 h-4 text-indigo-500" /> Purchase Price ({currency})</label>
-                  <input type="number" className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold" value={currentItem.purchasePrice} onChange={(e) => setCurrentItem({...currentItem, purchasePrice: e.target.value})} />
+                  <label className="flex items-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-300">
+                    <Box className="w-4 h-4 text-violet-500" /> Packing <span className="text-[10px] font-normal text-slate-400">(units/box)</span>
+                  </label>
+                  <input
+                    type="number" min="1"
+                    placeholder="e.g. 30"
+                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border-2 border-violet-300 dark:border-violet-700 rounded-xl text-sm font-bold focus:border-violet-500 outline-none"
+                    value={currentItem.packSize}
+                    onChange={(e) => setCurrentItem({...currentItem, packSize: e.target.value})}
+                  />
                 </div>
+                {/* Box/pack price from invoice */}
                 <div className="space-y-2">
-                  <label className="flex items-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-300"><DollarSign className="w-4 h-4 text-emerald-600" /> Retail Price ({currency})</label>
-                  <input type="number" className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold" value={currentItem.salePriceRetail} onChange={(e) => setCurrentItem({...currentItem, salePriceRetail: e.target.value})} />
+                  <label className="flex items-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-300">
+                    <DollarSign className="w-4 h-4 text-indigo-500" /> Box/Pack Price <span className="text-[10px] font-normal text-slate-400">({currency})</span>
+                  </label>
+                  <input
+                    type="number" min="0" step="0.01"
+                    placeholder="Price on invoice"
+                    className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border-2 border-indigo-300 dark:border-indigo-700 rounded-xl text-sm font-bold focus:border-indigo-500 outline-none"
+                    value={currentItem.boxPrice}
+                    onChange={(e) => setCurrentItem({...currentItem, boxPrice: e.target.value})}
+                  />
                 </div>
-                <div className="space-y-2">
-                  <label className="flex items-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-300"><DollarSign className="w-4 h-4 text-amber-600" /> Distribution Price ({currency})</label>
-                  <input type="number" className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold" value={currentItem.salePriceDistribution} onChange={(e) => setCurrentItem({...currentItem, salePriceDistribution: e.target.value})} />
+
+                {/* Sale price mode toggle + retail + distribution — spans 2 cols */}
+                <div className="md:col-span-2 space-y-2">
+                  {/* Toggle */}
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-bold text-slate-600 dark:text-slate-300">Sale Prices</span>
+                    <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-900 rounded-lg p-1">
+                      <button
+                        type="button"
+                        onClick={() => setSalePriceMode('unit')}
+                        className={`px-3 py-1 rounded-md text-xs font-bold transition-all ${salePriceMode === 'unit' ? 'bg-white dark:bg-slate-700 text-indigo-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                      >
+                        Per Unit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setSalePriceMode('pack')}
+                        className={`px-3 py-1 rounded-md text-xs font-bold transition-all ${salePriceMode === 'pack' ? 'bg-white dark:bg-slate-700 text-violet-600 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+                      >
+                        Per Pack
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    {/* Retail */}
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-emerald-600">
+                        Retail {salePriceMode === 'pack' ? `(pack of ${packSizeNum})` : '(per unit)'}
+                      </label>
+                      {salePriceMode === 'unit' ? (
+                        <input
+                          type="number" min="0" step="0.01"
+                          className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border-2 border-emerald-300 dark:border-emerald-700 rounded-xl text-sm font-bold focus:border-emerald-500 outline-none"
+                          value={currentItem.salePriceRetail}
+                          onChange={(e) => setCurrentItem({...currentItem, salePriceRetail: e.target.value})}
+                        />
+                      ) : (
+                        <div className="space-y-1">
+                          <input
+                            type="number" min="0" step="0.01"
+                            placeholder="Pack price"
+                            className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border-2 border-emerald-300 dark:border-emerald-700 rounded-xl text-sm font-bold focus:border-emerald-500 outline-none"
+                            value={currentItem.salePriceRetailPack}
+                            onChange={(e) => setCurrentItem({...currentItem, salePriceRetailPack: e.target.value})}
+                          />
+                          {derivedRetailPerUnit > 0 && (
+                            <p className="text-[11px] text-emerald-600 font-bold pl-1">
+                              → {currency}{derivedRetailPerUnit.toFixed(2)}/unit
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Distribution */}
+                    <div className="space-y-1">
+                      <label className="text-xs font-bold text-amber-600">
+                        Distribution {salePriceMode === 'pack' ? `(pack of ${packSizeNum})` : '(per unit)'}
+                      </label>
+                      {salePriceMode === 'unit' ? (
+                        <input
+                          type="number" min="0" step="0.01"
+                          className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border-2 border-amber-300 dark:border-amber-700 rounded-xl text-sm font-bold focus:border-amber-500 outline-none"
+                          value={currentItem.salePriceDistribution}
+                          onChange={(e) => setCurrentItem({...currentItem, salePriceDistribution: e.target.value})}
+                        />
+                      ) : (
+                        <div className="space-y-1">
+                          <input
+                            type="number" min="0" step="0.01"
+                            placeholder="Pack price"
+                            className="w-full px-3 py-2 bg-slate-50 dark:bg-slate-900 border-2 border-amber-300 dark:border-amber-700 rounded-xl text-sm font-bold focus:border-amber-500 outline-none"
+                            value={currentItem.salePriceDistributionPack}
+                            onChange={(e) => setCurrentItem({...currentItem, salePriceDistributionPack: e.target.value})}
+                          />
+                          {derivedDistributionPerUnit > 0 && (
+                            <p className="text-[11px] text-amber-600 font-bold pl-1">
+                              → {currency}{derivedDistributionPerUnit.toFixed(2)}/unit
+                            </p>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
+              </div>
+
+              {/* Discount + Live auto-calculation panel */}
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6 items-start">
                 <div className="space-y-2">
                   <label className="flex items-center gap-2 text-sm font-bold text-slate-600 dark:text-slate-300"><Percent className="w-4 h-4 text-red-500" /> Discount (%)</label>
-                  <input type="number" className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold" value={currentItem.discount} onChange={(e) => setCurrentItem({...currentItem, discount: e.target.value})} />
+                  <input type="number" min="0" max="100" className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-sm font-bold" value={currentItem.discount} onChange={(e) => setCurrentItem({...currentItem, discount: e.target.value})} />
+                </div>
+
+                {/* Live calculation breakdown — spans 3 columns */}
+                <div className="md:col-span-3">
+                  <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Live Calculation</p>
+                  <div className="bg-gradient-to-r from-indigo-50 to-violet-50 dark:from-indigo-900/20 dark:to-violet-900/20 border border-indigo-200 dark:border-indigo-700 rounded-xl p-4">
+                    <div className="flex flex-wrap items-center gap-2 text-sm font-bold text-slate-700 dark:text-slate-200">
+                      <span className="px-2 py-1 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 text-indigo-600">
+                        {packQtyNum} box{packQtyNum !== 1 ? 'es' : ''}
+                      </span>
+                      <span className="text-slate-400">×</span>
+                      <span className="px-2 py-1 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 text-violet-600">
+                        {packSizeNum} units/box
+                      </span>
+                      <span className="text-slate-400">=</span>
+                      <span className="px-3 py-1 bg-emerald-100 dark:bg-emerald-900/30 rounded-lg border border-emerald-300 dark:border-emerald-700 text-emerald-700 dark:text-emerald-400 font-black">
+                        {derivedTotalUnits} total units
+                      </span>
+                      {Number(currentItem.bonus) > 0 && (
+                        <>
+                          <span className="text-slate-400">+</span>
+                          <span className="px-2 py-1 bg-emerald-50 dark:bg-emerald-900/20 rounded-lg border border-emerald-200 text-emerald-600 text-xs">
+                            {currentItem.bonus} bonus
+                          </span>
+                        </>
+                      )}
+                    </div>
+
+                    <div className="mt-3 pt-3 border-t border-indigo-100 dark:border-indigo-800 flex flex-wrap gap-6">
+                      <div className="space-y-0.5">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Per Unit Cost</p>
+                        <p className="text-lg font-black text-indigo-600">
+                          {currency}{derivedPerUnitPrice > 0 ? derivedPerUnitPrice.toFixed(2) : '—'}
+                        </p>
+                        {packSizeNum > 1 && boxPriceNum > 0 && (
+                          <p className="text-[10px] text-slate-400">{currency}{boxPriceNum} ÷ {packSizeNum}</p>
+                        )}
+                      </div>
+                      <div className="space-y-0.5 border-l border-indigo-100 dark:border-indigo-800 pl-6">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Line Subtotal</p>
+                        <p className="text-lg font-black text-emerald-600">
+                          {currency}{derivedSubtotal > 0 ? derivedSubtotal.toFixed(2) : '—'}
+                        </p>
+                        {Number(currentItem.discount) > 0 && (
+                          <p className="text-[10px] text-red-400">after {currentItem.discount}% disc.</p>
+                        )}
+                      </div>
+                      {derivedRetailPerUnit > 0 && (
+                        <div className="space-y-0.5 border-l border-indigo-100 dark:border-indigo-800 pl-6">
+                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Retail / Dist. (stored)</p>
+                          <p className="text-sm font-black">
+                            <span className="text-emerald-600">{currency}{derivedRetailPerUnit.toFixed(2)}</span>
+                            <span className="text-slate-300 mx-1">/</span>
+                            <span className="text-amber-600">{currency}{derivedDistributionPerUnit.toFixed(2)}</span>
+                          </p>
+                          <p className="text-[10px] text-slate-400">per unit in DB</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
@@ -612,8 +875,9 @@ export default function PurchasesClient({
                 <tr>
                   <th className="px-4 py-3">Product / Batch</th>
                   <th className="px-4 py-3">Expiry</th>
-                  <th className="px-4 py-3">Qty/Bonus</th>
-                  <th className="px-4 py-3">P. Price</th>
+                  <th className="px-4 py-3">Packing</th>
+                  <th className="px-4 py-3">Units / Bonus</th>
+                  <th className="px-4 py-3">Unit Price</th>
                   <th className="px-4 py-3">Sale (R/D)</th>
                   <th className="px-4 py-3">Disc%</th>
                   <th className="px-4 py-3 text-right">Subtotal</th>
@@ -624,10 +888,26 @@ export default function PurchasesClient({
                 {items.length === 0 ? (<tr><td colSpan={8} className="px-4 py-12 text-center text-slate-500">Add items above to see them in the table</td></tr>) : (
                   items.map((it) => (
                     <tr key={it.id} className="hover:bg-slate-50 dark:hover:bg-slate-900/30">
-                      <td className="px-4 py-3 font-medium">{it.productName}<div className="text-[10px] text-slate-400 font-normal">Batch: {it.batchNumber || 'N/A'}</div></td>
+                      <td className="px-4 py-3 font-medium">
+                        {it.productName}
+                        <div className="text-[10px] text-slate-400 font-normal">Batch: {it.batchNumber || 'N/A'}</div>
+                      </td>
                       <td className="px-4 py-3 text-slate-500">{it.expiryDate || '-'}</td>
-                      <td className="px-4 py-3">{it.quantity} <span className="text-emerald-500 font-bold">+{it.bonus}</span></td>
-                      <td className="px-4 py-3">{currency}{it.purchasePrice}</td>
+                      <td className="px-4 py-3 text-slate-500">
+                        {Number(it.packQty) > 0 && Number(it.packSize) > 1
+                          ? <span className="text-[11px] font-bold text-violet-600">{it.packQty} × {it.packSize}</span>
+                          : <span className="text-[11px] text-slate-400">—</span>
+                        }
+                      </td>
+                      <td className="px-4 py-3">
+                        {it.quantity} <span className="text-emerald-500 font-bold">+{it.bonus}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className="font-bold">{currency}{Number(it.purchasePrice).toFixed(2)}</span>
+                        {Number(it.packSize) > 1 && Number(it.boxPrice) > 0 && (
+                          <div className="text-[10px] text-slate-400">{currency}{Number(it.boxPrice).toFixed(2)}/box</div>
+                        )}
+                      </td>
                       <td className="px-4 py-3"><span className="text-emerald-600">{currency}{it.salePriceRetail}</span> / <span className="text-amber-600">{currency}{it.salePriceDistribution}</span></td>
                       <td className="px-4 py-3">{it.discount}%</td>
                       <td className="px-4 py-3 text-right font-bold">{currency}{it.subtotal.toFixed(2)}</td>
@@ -642,15 +922,20 @@ export default function PurchasesClient({
                                 categoryId: it.categoryId,
                                 batchNumber: it.batchNumber,
                                 expiryDate: it.expiryDate,
+                                packQty: it.packQty || it.quantity,
+                                packSize: it.packSize || '1',
+                                boxPrice: it.boxPrice || it.purchasePrice,
                                 quantity: it.quantity,
                                 bonus: it.bonus,
                                 purchasePrice: it.purchasePrice,
                                 salePriceRetail: it.salePriceRetail,
                                 salePriceDistribution: it.salePriceDistribution,
+                                salePriceRetailPack: '0',
+                                salePriceDistributionPack: '0',
                                 discount: it.discount,
-                                subtotal: it.subtotal,
                                 isNewProduct: it.isNewProduct
                               });
+                              setSalePriceMode('unit');
                               setItems(items.filter(i => i.id !== it.id));
                             }} 
                             className="text-amber-500 p-1 hover:bg-amber-50 rounded"

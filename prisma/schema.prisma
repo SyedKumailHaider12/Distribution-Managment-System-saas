@@ -48,6 +48,7 @@ model Organization {
   customerReturns CustomerReturn[]
   purchaseReturns PurchaseReturn[]
   auditLogs AuditLog[]
+  draftSales DraftSale[]
 }
 
 model Branch {
@@ -148,6 +149,7 @@ model User {
   markedAttendances Attendance[] @relation("MarkedBy")
   processedReturns CustomerReturn[] @relation("ProcessedReturns")
   processedPurchaseReturns PurchaseReturn[] @relation("ProcessedPurchaseReturns")
+  draftSales   DraftSale[] @relation("DraftSales")
 
   @@unique([organizationId, username])
 }
@@ -569,6 +571,25 @@ model Settings {
   theme          String?  @default("light")
 
   organization Organization @relation(fields: [organizationId], references: [id])
+}
+
+model DraftSale {
+  id             Int      @id @default(autoincrement())
+  organizationId Int
+  userId         Int
+  customerId     Int?
+  salesmanId     Int?
+  warehouseId    Int?
+  saleType       String   @default("retail")
+  items          String   // JSON string of sale items
+  discount       Float    @default(0)
+  discountType   String   @default("percentage")
+  notes          String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  organization Organization @relation(fields: [organizationId], references: [id])
+  user         User         @relation("DraftSales", fields: [userId], references: [id])
 }
 
 model AuditLog {
