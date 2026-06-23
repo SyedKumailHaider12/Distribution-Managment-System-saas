@@ -144,7 +144,7 @@ export async function createSalesInvoice(data: {
   });
   
   const invoiceNumber = saleType === 'retail'
-    ? `INV-R${String(count + 1).padStart(3, '0')}/${month}/${year}`
+    ? `INV-R.${String(count + 1).padStart(3, '0')}/${month}/${year}`
     : `INV-D.${String(count + 1).padStart(3, '0')}/${month}/${year}`;
 
   const result = await prisma.$transaction(async (tx) => {
@@ -516,6 +516,80 @@ export async function deleteSalesInvoice(invoiceId: number) {
     return { success: true };
   } catch (error: any) {
     console.error('Sales invoice delete error:', error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function recordSalesPayment(invoiceId: number, amount: number, paymentMethod: string) {
+  try {
+    const session = await getSession();
+    if (!session) throw new Error('Unauthorized');
+    const organizationId = session.organizationId;
+
+    const result = await prisma.$transaction(async (tx) => {
+      const invoice = await tx.salesInvoice.findUnique({
+        where: { id: invoiceId, organizationId }
+      });
+
+      if (!invoice) throw new Error('Invoice not found');
+
+      if (amount + invoice.paidAmount > invoice.netAmount) {
+        throw new Error('Total payment exceeds invoice net amount');
+      }
+
+      const newPaidAmount = invoice.paidAmount + amount;
+      const newStatus = newPaidAmount >= invoice.netAmount ? 'PAID' : 'PARTIAL';
+
+      // Update Invoice
+      await tx.salesInvoice.update({
+        where: { id: invoiceId },
+        data: { paidAmount: newPaidAmount, status: newStatus }
+      });
+
+      // Create Payment Record
+      await tx.payment.create({
+        data: {
+          organizationId,
+          branchId: invoice.branchId,
+          date: new Date(),
+          type: 'SALE',
+          paymentMethod,
+          amount,
+          referenceNumber: invoice.invoiceNumber,
+          customerId: invoice.customerId,
+          invoiceNumber: invoice.invoiceNumber,
+          notes: `Additional payment for Sales Invoice: ${invoice.invoiceNumber}`
+        }
+      });
+
+      // Update Ledger if it's a distribution sale (has a customer)
+      if (invoice.customerId) {
+        const lastEntry = await tx.customerLedgerEntry.findFirst({
+          where: { customerId: invoice.customerId, organizationId },
+          orderBy: { date: 'desc' }
+        });
+
+        await tx.customerLedgerEntry.create({
+          data: {
+            organizationId,
+            customerId: invoice.customerId,
+            type: 'CREDIT',
+            amount,
+            description: `Payment for Invoice: ${invoice.invoiceNumber}`,
+            referenceId: invoice.invoiceNumber,
+            balance: (lastEntry?.balance || 0) - amount
+          }
+        });
+      }
+
+      return { newPaidAmount, newStatus };
+    });
+
+    revalidatePath('/sales');
+    revalidatePath('/dashboard');
+    return { success: true, result };
+  } catch (error: any) {
+    console.error('Record payment error:', error);
     return { success: false, error: error.message };
   }
 }

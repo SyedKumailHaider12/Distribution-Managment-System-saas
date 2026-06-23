@@ -2,10 +2,11 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { Search, Bell, Sun, Moon, User, ChevronDown, X, Package, ShoppingCart, Users, Building2, Warehouse, Tag, FileText, Truck, RotateCcw, BarChart3, Settings, LogOut, LayoutDashboard, ClipboardList } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from './ThemeProvider';
+import { useAuth } from './AuthProvider';
 
 const NAV_TABS = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -30,11 +31,21 @@ interface HeaderProps {
 
 export const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
   const pathname = usePathname();
+  const router = useRouter();
   const { theme, toggleTheme } = useTheme();
+  const { user } = useAuth();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('');
   const profileRef = useRef<HTMLDivElement>(null);
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } catch (_) {}
+    router.push('/login');
+    router.refresh();
+  };
 
   useEffect(() => {
     // Set active tab based on current path
@@ -102,8 +113,8 @@ export const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
                   className="absolute right-0 mt-2 w-56 bg-white dark:bg-slate-800 rounded-xl shadow-lg border border-slate-200 dark:border-slate-700 py-1"
                 >
                   <div className="px-4 py-3 border-b border-slate-100 dark:border-slate-700">
-                    <p className="text-sm font-semibold text-slate-800 dark:text-white">Admin User</p>
-                    <p className="text-xs text-slate-500 dark:text-slate-400 truncate">admin@azantech.com</p>
+                    <p className="text-sm font-semibold text-slate-800 dark:text-white">{user?.fullName || user?.username || 'User'}</p>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 truncate capitalize">{user?.role || 'Staff'}</p>
                   </div>
                   <div className="py-1">
                     <Link href="/profile" className="flex items-center px-4 py-2.5 text-sm text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-700/50 hover:text-indigo-600 transition-colors">
@@ -114,7 +125,7 @@ export const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
                     </Link>
                   </div>
                   <div className="py-1 border-t border-slate-100 dark:border-slate-700">
-                    <button className="flex w-full items-center px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors">
+                    <button onClick={handleLogout} className="flex w-full items-center px-4 py-2.5 text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors">
                       <LogOut className="w-4 h-4 mr-2" />
                       Sign out
                     </button>
@@ -208,7 +219,7 @@ export const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
                   {theme === 'dark' ? <Sun className="w-5 h-5 text-amber-500" /> : <Moon className="w-5 h-5" />}
                   <span className="text-sm">{theme === 'dark' ? 'Light' : 'Dark'}</span>
                 </button>
-                <button className="flex-1 flex items-center justify-center gap-2 p-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500">
+                <button onClick={handleLogout} className="flex-1 flex items-center justify-center gap-2 p-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500">
                   <LogOut className="w-5 h-5" />
                   <span className="text-sm">Logout</span>
                 </button>

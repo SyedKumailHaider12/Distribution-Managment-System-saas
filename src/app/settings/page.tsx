@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Building2, FileText, Bell, Database, Palette, Save, Sun, Moon, Upload, X, UserCog, Plus, Trash2 } from 'lucide-react';
 import { saveOrganizationSettings } from './actions';
-import { getEmployeeRoles, createEmployeeRole, deleteEmployeeRole } from './roleActions';
+import { getEmployeeRoles, createEmployeeRole, deleteEmployeeRole, getRolePermissions, updateRolePermissions } from './roleActions';
 import { useTheme } from '@/components/ThemeProvider';
 
 const TABS = [
@@ -39,8 +39,23 @@ export default function SettingsPage() {
   });
 
   const [roles, setRoles] = useState<any[]>([]);
+  const [rolePermissions, setRolePermissions] = useState<any[]>([]);
   const [newRoleName, setNewRoleName] = useState('');
   const [isAddingRole, setIsAddingRole] = useState(false);
+  const [selectedRoleForPerms, setSelectedRoleForPerms] = useState<string | null>(null);
+  const [selectedRoleModules, setSelectedRoleModules] = useState<string[]>([]);
+  const [isSavingPerms, setIsSavingPerms] = useState(false);
+
+  const MODULES = [
+    { id: 'dashboard', label: 'Dashboard' },
+    { id: 'inventory', label: 'Inventory (Purchases, Stock, etc)' },
+    { id: 'sales', label: 'Transactions (Sales)' },
+    { id: 'returns', label: 'Returns' },
+    { id: 'people', label: 'People (Customers, Suppliers, etc)' },
+    { id: 'master_data', label: 'Master Data (Companies, Warehouses)' },
+    { id: 'reports', label: 'Reports & Logs' },
+    { id: 'settings', label: 'System & Settings' },
+  ];
 
   useEffect(() => {
     async function loadSettings() {
@@ -73,9 +88,13 @@ export default function SettingsPage() {
           });
         }
 
-        // Load employee roles
-        const rolesData = await getEmployeeRoles();
+        // Load employee roles and permissions
+        const [rolesData, permsData] = await Promise.all([
+          getEmployeeRoles(),
+          getRolePermissions()
+        ]);
         setRoles(rolesData);
+        setRolePermissions(permsData);
       } catch (err) {
         console.error('Failed to load settings', err);
       }
@@ -109,6 +128,41 @@ export default function SettingsPage() {
       setRoles(rolesData);
     } catch (err: any) {
       alert(err.message || 'Failed to delete role');
+    }
+  };
+
+  const openRolePermissions = (roleName: string) => {
+    setSelectedRoleForPerms(roleName);
+    const existing = rolePermissions.find(p => p.role === roleName);
+    if (existing && existing.modules) {
+      try {
+        setSelectedRoleModules(JSON.parse(existing.modules));
+      } catch {
+        setSelectedRoleModules([]);
+      }
+    } else {
+      setSelectedRoleModules([]);
+    }
+  };
+
+  const toggleRoleModule = (moduleId: string) => {
+    setSelectedRoleModules(prev => 
+      prev.includes(moduleId) ? prev.filter(m => m !== moduleId) : [...prev, moduleId]
+    );
+  };
+
+  const handleSaveRolePermissions = async () => {
+    if (!selectedRoleForPerms) return;
+    setIsSavingPerms(true);
+    try {
+      await updateRolePermissions(selectedRoleForPerms, selectedRoleModules);
+      const permsData = await getRolePermissions();
+      setRolePermissions(permsData);
+      setSelectedRoleForPerms(null);
+    } catch (err: any) {
+      alert(err.message || 'Failed to save permissions');
+    } finally {
+      setIsSavingPerms(false);
     }
   };
 
@@ -290,12 +344,22 @@ export default function SettingsPage() {
             <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3">System Roles (Default)</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-2 mb-6">
               {['Admin', 'Manager', 'Cashier', 'Salesman'].map(role => (
-                <div key={role} className="flex items-center justify-between p-3 bg-slate-100 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700">
-                  <div className="flex items-center gap-2">
-                    <UserCog className="w-4 h-4 text-slate-400" />
-                    <span className="font-medium text-slate-700 dark:text-slate-300">{role}</span>
+                <div key={role} className="flex flex-col p-3 bg-slate-100 dark:bg-slate-900/50 rounded-lg border border-slate-200 dark:border-slate-700">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <UserCog className="w-4 h-4 text-slate-400" />
+                      <span className="font-medium text-slate-700 dark:text-slate-300">{role}</span>
+                    </div>
+                    <span className="text-xs px-2 py-1 bg-slate-200 dark:bg-slate-800 text-slate-500 rounded">System</span>
                   </div>
-                  <span className="text-xs px-2 py-1 bg-slate-200 dark:bg-slate-800 text-slate-500 rounded">System</span>
+                  {role.toLowerCase() !== 'admin' && (
+                    <button 
+                      onClick={() => openRolePermissions(role.toLowerCase())}
+                      className="mt-2 text-xs text-teal-600 hover:text-teal-700 dark:text-teal-400 font-medium text-left"
+                    >
+                      Manage Permissions
+                    </button>
+                  )}
                 </div>
               ))}
             </div>
@@ -305,20 +369,28 @@ export default function SettingsPage() {
                 <h3 className="text-sm font-bold text-slate-400 uppercase tracking-wider mb-3 mt-6">Custom Roles</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   {roles.map(role => (
-                    <div key={role.id} className="flex items-center justify-between p-3 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
-                      <div className="flex items-center gap-2">
-                        <UserCog className="w-4 h-4 text-teal-600" />
-                        <span className="font-medium text-slate-700 dark:text-slate-300">{role.name}</span>
+                    <div key={role.id} className="flex flex-col p-3 bg-white dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                          <UserCog className="w-4 h-4 text-teal-600" />
+                          <span className="font-medium text-slate-700 dark:text-slate-300">{role.name}</span>
+                        </div>
+                        {!role.isSystem && (
+                          <button 
+                            onClick={() => handleDeleteRole(role.id)}
+                            className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded transition-colors"
+                            title="Delete Role"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        )}
                       </div>
-                      {!role.isSystem && (
-                        <button 
-                          onClick={() => handleDeleteRole(role.id)}
-                          className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 rounded transition-colors"
-                          title="Delete Role"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      )}
+                      <button 
+                        onClick={() => openRolePermissions(role.name)}
+                        className="mt-2 text-xs text-teal-600 hover:text-teal-700 dark:text-teal-400 font-medium text-left"
+                      >
+                        Manage Permissions
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -332,6 +404,46 @@ export default function SettingsPage() {
               </div>
             )}
           </div>
+
+          {/* Permissions Modal/Slide-over */}
+          {selectedRoleForPerms && (
+            <div className="fixed inset-0 bg-slate-900/50 z-50 flex items-center justify-center p-4">
+              <div className="bg-white dark:bg-slate-800 rounded-xl shadow-xl border border-slate-200 dark:border-slate-700 max-w-md w-full max-h-[90vh] flex flex-col">
+                <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
+                  <h3 className="font-bold text-slate-800 dark:text-white capitalize">Permissions for: {selectedRoleForPerms}</h3>
+                  <button onClick={() => setSelectedRoleForPerms(null)} className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                <div className="p-4 overflow-y-auto flex-1 space-y-3">
+                  <p className="text-sm text-slate-500 mb-4">Select which modules this role is allowed to access.</p>
+                  {MODULES.map(module => (
+                    <label key={module.id} className="flex items-center gap-3 p-3 border border-slate-200 dark:border-slate-700 rounded-lg cursor-pointer hover:bg-slate-50 dark:hover:bg-slate-900/50">
+                      <input 
+                        type="checkbox" 
+                        checked={selectedRoleModules.includes(module.id)} 
+                        onChange={() => toggleRoleModule(module.id)}
+                        className="w-4 h-4 text-teal-600 rounded" 
+                      />
+                      <span className="text-sm font-medium text-slate-700 dark:text-slate-300">{module.label}</span>
+                    </label>
+                  ))}
+                </div>
+                <div className="p-4 border-t border-slate-200 dark:border-slate-700 flex justify-end gap-3 bg-slate-50 dark:bg-slate-900/50 rounded-b-xl">
+                  <button onClick={() => setSelectedRoleForPerms(null)} className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-slate-800">
+                    Cancel
+                  </button>
+                  <button 
+                    onClick={handleSaveRolePermissions}
+                    disabled={isSavingPerms}
+                    className="px-4 py-2 text-sm font-medium bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2"
+                  >
+                    <Save className="w-4 h-4" /> {isSavingPerms ? 'Saving...' : 'Save Permissions'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 

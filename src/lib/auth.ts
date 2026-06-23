@@ -10,6 +10,7 @@ export interface SessionUser {
   role: string;
   fullName: string | null;
   organizationId: number;
+  permissions?: string[];
 }
 
 export async function hashPassword(password: string): Promise<string> {
@@ -39,12 +40,34 @@ export async function login(username: string, password: string, organizationId: 
     return null;
   }
 
+  let permissions: string[] = [];
+  if (user.role === 'admin') {
+    permissions = ['*'];
+  } else {
+    const rp = await prisma.rolePermission.findUnique({
+      where: {
+        organizationId_role: {
+          organizationId,
+          role: user.role
+        }
+      }
+    });
+    if (rp && rp.modules) {
+      try {
+        permissions = JSON.parse(rp.modules);
+      } catch (e) {
+        permissions = [];
+      }
+    }
+  }
+
   return {
     id: user.id,
     username: user.username,
     role: user.role,
     fullName: user.fullName,
     organizationId: user.organizationId,
+    permissions,
   };
 }
 

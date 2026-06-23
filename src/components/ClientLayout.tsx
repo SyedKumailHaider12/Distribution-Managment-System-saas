@@ -14,12 +14,29 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
 
   const isPublicPage = pathname === '/login' || pathname === '/signup' || pathname === '/landing' || pathname === '/';
+  const isBillingPage = pathname === '/billing';
 
   useEffect(() => {
     if (!loading && !user && !isPublicPage) {
       router.push('/login');
     }
-  }, [user, loading, router, isPublicPage]);
+    
+    if (!loading && user && !isPublicPage && !isBillingPage) {
+      if (user.subscriptionStatus === 'EXPIRED') {
+         router.push('/billing');
+      } else if (user.subscriptionStatus === 'TRIAL' && user.trialEndsAt) {
+         const trialEnds = new Date(user.trialEndsAt);
+         if (new Date() > trialEnds) {
+            router.push('/billing');
+         }
+      } else if (user.subscriptionStatus === 'ACTIVE' && user.subscriptionEndsAt) {
+         const subEnds = new Date(user.subscriptionEndsAt);
+         if (new Date() > subEnds) {
+            router.push('/billing');
+         }
+      }
+    }
+  }, [user, loading, router, isPublicPage, isBillingPage]);
 
   if (loading) {
     return (

@@ -12,7 +12,7 @@ interface ThemeContextType {
 }
 
 const ThemeContext = createContext<ThemeContextType>({
-  theme: 'light',
+  theme: 'dark',
   toggleTheme: () => {},
   isLoading: true
 })
@@ -26,7 +26,7 @@ interface ThemeProviderProps {
   initialTheme?: string
 }
 
-export function ThemeProvider({ children, initialTheme = 'light' }: ThemeProviderProps) {
+export function ThemeProvider({ children, initialTheme = 'dark' }: ThemeProviderProps) {
   const [theme, setTheme] = useState<Theme>(initialTheme as Theme)
   const [isMounted, setIsMounted] = useState(false)
 

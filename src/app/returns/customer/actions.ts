@@ -31,18 +31,9 @@ export async function getCustomerReturns() {
   return prisma.customerReturn.findMany({
     where: { organizationId: session.organizationId },
     include: {
-      invoice: {
-        include: {
-          customer: true,
-        },
-      },
+      invoice: { include: { customer: true } },
       processedByUser: true,
-      items: {
-        include: {
-          product: true,
-          batch: true,
-        },
-      },
+      items: { include: { product: true, batch: true } },
     },
     orderBy: { returnDate: 'desc' },
   });
@@ -148,6 +139,24 @@ export async function createCustomerReturn(data: {
         paidAmount: { decrement: totalAmount },
       },
     });
+
+    if (fullInvoice.saleType === 'distribution' && fullInvoice.customerId) {
+      const lastEntry = await prisma.customerLedgerEntry.findFirst({
+        where: { customerId: fullInvoice.customerId, organizationId: session.organizationId },
+        orderBy: { date: 'desc' },
+      });
+      await prisma.customerLedgerEntry.create({
+        data: {
+          organizationId: session.organizationId,
+          customerId: fullInvoice.customerId,
+          type: 'CREDIT',
+          amount: totalAmount,
+          description: `Sales Return against Invoice: ${fullInvoice.invoiceNumber}. Reason: ${reason || 'N/A'}`,
+          referenceId: fullInvoice.invoiceNumber,
+          balance: (lastEntry?.balance || 0) - totalAmount,
+        },
+      });
+    }
   }
 
   // Audit log

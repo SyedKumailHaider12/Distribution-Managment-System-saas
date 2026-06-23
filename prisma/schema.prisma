@@ -20,6 +20,11 @@ model Organization {
   taxId         String?  // Tax identification number
   website       String?  // Organization website
   currency      String?  // Preferred currency (e.g., USD, EUR)
+  
+  subscriptionStatus String @default("TRIAL") // TRIAL, ACTIVE, EXPIRED
+  trialEndsAt        DateTime?
+  subscriptionEndsAt DateTime?
+  
   createdAt     DateTime @default(now())
 
   branches  Branch[]
@@ -49,6 +54,7 @@ model Organization {
   purchaseReturns PurchaseReturn[]
   auditLogs AuditLog[]
   draftSales DraftSale[]
+  rolePermissions RolePermission[]
 }
 
 model Branch {
@@ -153,6 +159,18 @@ model User {
 
   @@unique([organizationId, username])
 }
+
+model RolePermission {
+  id             Int      @id @default(autoincrement())
+  organizationId Int
+  role           String   // e.g., 'manager', 'cashier', 'salesman'
+  modules        String   // JSON string of allowed modules e.g., '["sales", "purchases"]'
+
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, role])
+}
+
 
 // === CORE MASTER DATA ===
 model Area {

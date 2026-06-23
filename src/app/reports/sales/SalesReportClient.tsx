@@ -1,8 +1,11 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { BarChart3, Download, RotateCcw, TrendingUp, ShoppingCart, Users, DollarSign } from 'lucide-react';
+import { BarChart3, Download, RotateCcw, TrendingUp, ShoppingCart, Users, DollarSign, FileDown } from 'lucide-react';
 import { useCurrency } from '@/contexts/CurrencyContext';
+import { pdf } from '@react-pdf/renderer';
+import BasePDFReport from '@/components/reports/BasePDFReport';
+import { Document, Page, View, Text, StyleSheet } from '@react-pdf/renderer';
 
 interface Invoice {
   id: number;
@@ -26,8 +29,12 @@ interface Invoice {
 
 interface Props {
   invoices: Invoice[];
+  returns: any[];
   customers: { id: number; name: string }[];
   salesmen: { id: number; name: string }[];
+  categories: { id: number; name: string }[];
+  settings: any;
+  organization: any;
 }
 
 function getQuickDateRange(quickDate: string): { from: string; to: string } {
@@ -64,7 +71,16 @@ function getQuickDateRange(quickDate: string): { from: string; to: string } {
   }
 }
 
-export default function SalesReportClient({ invoices, customers, salesmen }: Props) {
+const pdfStyles = StyleSheet.create({
+  table: { marginTop: 10, marginBottom: 20 },
+  tableRow: { flexDirection: 'row', borderBottomWidth: 1, borderColor: '#e2e8f0', paddingVertical: 8 },
+  tableHeader: { flexDirection: 'row', backgroundColor: '#f1f5f9', paddingVertical: 10, fontWeight: 'bold', fontSize: 9 },
+  totalRow: { flexDirection: 'row', backgroundColor: '#e2e8f0', paddingVertical: 10, borderTopWidth: 2, borderColor: '#94a3b8' },
+  cell: { fontSize: 9, padding: 4 },
+  cellBold: { fontSize: 9, padding: 4, fontWeight: 'bold' },
+});
+
+export default function SalesReportClient({ invoices, returns, customers, salesmen, categories, settings, organization }: Props) {
   const { symbol } = useCurrency();
   const [quickDate, setQuickDate] = useState('this-month');
   const [dateFrom, setDateFrom] = useState('');
@@ -140,6 +156,140 @@ export default function SalesReportClient({ invoices, customers, salesmen }: Pro
     return Array.from(map.values()).sort((a, b) => b.revenue - a.revenue);
   }, [filtered]);
 
+  const exportPDF = async () => {
+    const dateRange = effectiveDates.from && effectiveDates.to
+      ? `${new Date(effectiveDates.from).toLocaleDateString()} - ${new Date(effectiveDates.to).toLocaleDateString()}`
+      : 'All Time';
+    
+    const doc = (
+      <BasePDFReport
+        organization={{
+          name: organization?.name || settings?.companyName || 'AzanTech DMS',
+          phone: organization?.phone || settings?.companyPhone,
+          email: organization?.email || settings?.companyEmail,
+          address: organization?.address || settings?.companyAddress,
+          city: organization?.city || settings?.companyCity,
+        }}
+        reportTitle="SALES REPORT"
+        reportSubtitle={`Report Type: ${reportType.toUpperCase()} | Date Range: ${dateRange}`}
+      >
+        <View style={pdfStyles.table}>
+          <View style={pdfStyles.tableHeader}>
+            {reportType === 'summary' && (
+              <>
+                <Text style={[pdfStyles.cell, { width: '15%' }]}>Invoice #</Text>
+                <Text style={[pdfStyles.cell, { width: '12%' }]}>Date</Text>
+                <Text style={[pdfStyles.cell, { width: '10%' }]}>Type</Text>
+                <Text style={[pdfStyles.cell, { width: '20%' }]}>Customer</Text>
+                <Text style={[pdfStyles.cell, { width: '15%' }]}>Salesman</Text>
+                <Text style={[pdfStyles.cell, { width: '14%', textAlign: 'right' }]}>Net</Text>
+                <Text style={[pdfStyles.cell, { width: '14%', textAlign: 'right' }]}>Paid</Text>
+              </>
+            )}
+            {reportType === 'product' && (
+              <>
+                <Text style={[pdfStyles.cell, { width: '10%' }]}>#</Text>
+                <Text style={[pdfStyles.cell, { width: '50%' }]}>Product</Text>
+                <Text style={[pdfStyles.cell, { width: '20%', textAlign: 'right' }]}>Qty Sold</Text>
+                <Text style={[pdfStyles.cell, { width: '20%', textAlign: 'right' }]}>Revenue</Text>
+              </>
+            )}
+            {reportType === 'customer' && (
+              <>
+                <Text style={[pdfStyles.cell, { width: '10%' }]}>#</Text>
+                <Text style={[pdfStyles.cell, { width: '40%' }]}>Customer</Text>
+                <Text style={[pdfStyles.cell, { width: '15%', textAlign: 'right' }]}>Invoices</Text>
+                <Text style={[pdfStyles.cell, { width: '15%', textAlign: 'right' }]}>Revenue</Text>
+                <Text style={[pdfStyles.cell, { width: '20%', textAlign: 'right' }]}>Due</Text>
+              </>
+            )}
+            {reportType === 'salesman' && (
+              <>
+                <Text style={[pdfStyles.cell, { width: '10%' }]}>#</Text>
+                <Text style={[pdfStyles.cell, { width: '50%' }]}>Salesman</Text>
+                <Text style={[pdfStyles.cell, { width: '20%', textAlign: 'right' }]}>Invoices</Text>
+                <Text style={[pdfStyles.cell, { width: '20%', textAlign: 'right' }]}>Revenue</Text>
+              </>
+            )}
+          </View>
+          {reportType === 'summary' && filtered.slice(0, 50).map((inv, i) => (
+            <View key={i} style={pdfStyles.tableRow}>
+              <Text style={[pdfStyles.cell, { width: '15%' }]}>{inv.invoiceNumber}</Text>
+              <Text style={[pdfStyles.cell, { width: '12%' }]}>{new Date(inv.invoiceDate).toLocaleDateString()}</Text>
+              <Text style={[pdfStyles.cell, { width: '10%' }]}>{inv.saleType}</Text>
+              <Text style={[pdfStyles.cell, { width: '20%' }]}>{inv.customer.name}</Text>
+              <Text style={[pdfStyles.cell, { width: '15%' }]}>{inv.salesman?.name || '—'}</Text>
+              <Text style={[pdfStyles.cell, { width: '14%', textAlign: 'right' }]}>{symbol}{inv.netAmount.toFixed(2)}</Text>
+              <Text style={[pdfStyles.cell, { width: '14%', textAlign: 'right' }]}>{symbol}{inv.paidAmount.toFixed(2)}</Text>
+            </View>
+          ))}
+          {reportType === 'summary' && filtered.length > 0 && (
+            <View style={pdfStyles.totalRow}>
+              <Text style={[pdfStyles.cellBold, { width: '72%' }]}>GRAND TOTAL ({filtered.length} invoices)</Text>
+              <Text style={[pdfStyles.cellBold, { width: '14%', textAlign: 'right' }]}>{symbol}{stats.totalSales.toFixed(2)}</Text>
+              <Text style={[pdfStyles.cellBold, { width: '14%', textAlign: 'right' }]}>{symbol}{stats.totalPaid.toFixed(2)}</Text>
+            </View>
+          )}
+          {reportType === 'product' && productReport.slice(0, 50).map((p, i) => (
+            <View key={i} style={pdfStyles.tableRow}>
+              <Text style={[pdfStyles.cell, { width: '10%' }]}>{i + 1}</Text>
+              <Text style={[pdfStyles.cell, { width: '50%' }]}>{p.name}</Text>
+              <Text style={[pdfStyles.cell, { width: '20%', textAlign: 'right' }]}>{p.qty}</Text>
+              <Text style={[pdfStyles.cell, { width: '20%', textAlign: 'right' }]}>{symbol}{p.revenue.toFixed(2)}</Text>
+            </View>
+          ))}
+          {reportType === 'product' && productReport.length > 0 && (
+            <View style={pdfStyles.totalRow}>
+              <Text style={[pdfStyles.cellBold, { width: '60%' }]}>GRAND TOTAL ({productReport.length} products)</Text>
+              <Text style={[pdfStyles.cellBold, { width: '20%', textAlign: 'right' }]}>{productReport.reduce((s, p) => s + p.qty, 0)}</Text>
+              <Text style={[pdfStyles.cellBold, { width: '20%', textAlign: 'right' }]}>{symbol}{productReport.reduce((s, p) => s + p.revenue, 0).toFixed(2)}</Text>
+            </View>
+          )}
+          {reportType === 'customer' && customerReport.slice(0, 50).map((c, i) => (
+            <View key={i} style={pdfStyles.tableRow}>
+              <Text style={[pdfStyles.cell, { width: '10%' }]}>{i + 1}</Text>
+              <Text style={[pdfStyles.cell, { width: '40%' }]}>{c.name}</Text>
+              <Text style={[pdfStyles.cell, { width: '15%', textAlign: 'right' }]}>{c.invoices}</Text>
+              <Text style={[pdfStyles.cell, { width: '15%', textAlign: 'right' }]}>{symbol}{c.revenue.toFixed(2)}</Text>
+              <Text style={[pdfStyles.cell, { width: '20%', textAlign: 'right' }]}>{symbol}{(c.revenue - c.paid).toFixed(2)}</Text>
+            </View>
+          ))}
+          {reportType === 'customer' && customerReport.length > 0 && (
+            <View style={pdfStyles.totalRow}>
+              <Text style={[pdfStyles.cellBold, { width: '50%' }]}>GRAND TOTAL ({customerReport.length} customers)</Text>
+              <Text style={[pdfStyles.cellBold, { width: '15%', textAlign: 'right' }]}>{customerReport.reduce((s, c) => s + c.invoices, 0)}</Text>
+              <Text style={[pdfStyles.cellBold, { width: '15%', textAlign: 'right' }]}>{symbol}{customerReport.reduce((s, c) => s + c.revenue, 0).toFixed(2)}</Text>
+              <Text style={[pdfStyles.cellBold, { width: '20%', textAlign: 'right' }]}>{symbol}{customerReport.reduce((s, c) => s + (c.revenue - c.paid), 0).toFixed(2)}</Text>
+            </View>
+          )}
+          {reportType === 'salesman' && salesmanReport.slice(0, 50).map((s, i) => (
+            <View key={i} style={pdfStyles.tableRow}>
+              <Text style={[pdfStyles.cell, { width: '10%' }]}>{i + 1}</Text>
+              <Text style={[pdfStyles.cell, { width: '50%' }]}>{s.name}</Text>
+              <Text style={[pdfStyles.cell, { width: '20%', textAlign: 'right' }]}>{s.invoices}</Text>
+              <Text style={[pdfStyles.cell, { width: '20%', textAlign: 'right' }]}>{symbol}{s.revenue.toFixed(2)}</Text>
+            </View>
+          ))}
+          {reportType === 'salesman' && salesmanReport.length > 0 && (
+            <View style={pdfStyles.totalRow}>
+              <Text style={[pdfStyles.cellBold, { width: '60%' }]}>GRAND TOTAL ({salesmanReport.length} salesmen)</Text>
+              <Text style={[pdfStyles.cellBold, { width: '20%', textAlign: 'right' }]}>{salesmanReport.reduce((s, sm) => s + sm.invoices, 0)}</Text>
+              <Text style={[pdfStyles.cellBold, { width: '20%', textAlign: 'right' }]}>{symbol}{salesmanReport.reduce((s, sm) => s + sm.revenue, 0).toFixed(2)}</Text>
+            </View>
+          )}
+        </View>
+      </BasePDFReport>
+    );
+
+    const blob = await pdf(doc).toBlob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `sales-report-${reportType}-${Date.now()}.pdf`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const exportCSV = () => {
     let rows: string[][] = [];
     let headers: string[] = [];
@@ -158,15 +308,19 @@ export default function SalesReportClient({ invoices, customers, salesmen }: Pro
         (inv.netAmount - inv.paidAmount).toFixed(2),
         inv.status,
       ]);
+      rows.push(['', '', '', '', 'GRAND TOTAL', filtered.reduce((s, i) => s + i.totalAmount, 0).toFixed(2), stats.totalDiscount.toFixed(2), stats.totalSales.toFixed(2), stats.totalPaid.toFixed(2), stats.totalDue.toFixed(2), '']);
     } else if (reportType === 'product') {
       headers = ['Product', 'Qty Sold', 'Revenue'];
       rows = productReport.map(p => [p.name, p.qty.toString(), p.revenue.toFixed(2)]);
+      rows.push(['GRAND TOTAL', productReport.reduce((s, p) => s + p.qty, 0).toString(), productReport.reduce((s, p) => s + p.revenue, 0).toFixed(2)]);
     } else if (reportType === 'customer') {
       headers = ['Customer', 'Invoices', 'Revenue', 'Paid', 'Due'];
       rows = customerReport.map(c => [c.name, c.invoices.toString(), c.revenue.toFixed(2), c.paid.toFixed(2), (c.revenue - c.paid).toFixed(2)]);
+      rows.push(['GRAND TOTAL', customerReport.reduce((s, c) => s + c.invoices, 0).toString(), customerReport.reduce((s, c) => s + c.revenue, 0).toFixed(2), customerReport.reduce((s, c) => s + c.paid, 0).toFixed(2), customerReport.reduce((s, c) => s + (c.revenue - c.paid), 0).toFixed(2)]);
     } else {
       headers = ['Salesman', 'Invoices', 'Revenue'];
       rows = salesmanReport.map(s => [s.name, s.invoices.toString(), s.revenue.toFixed(2)]);
+      rows.push(['GRAND TOTAL', salesmanReport.reduce((s, sm) => s + sm.invoices, 0).toString(), salesmanReport.reduce((s, sm) => s + sm.revenue, 0).toFixed(2)]);
     }
     const csv = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
@@ -184,9 +338,14 @@ export default function SalesReportClient({ invoices, customers, salesmen }: Pro
           </h1>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Real-time sales analysis and export</p>
         </div>
-        <button onClick={exportCSV} className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl flex items-center gap-2 text-sm">
-          <Download className="w-4 h-4" /> Export CSV
-        </button>
+        <div className="flex gap-2">
+          <button onClick={exportPDF} className="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl flex items-center gap-2 text-sm">
+            <FileDown className="w-4 h-4" /> Export PDF
+          </button>
+          <button onClick={exportCSV} className="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl flex items-center gap-2 text-sm">
+            <Download className="w-4 h-4" /> Export CSV
+          </button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -246,31 +405,31 @@ export default function SalesReportClient({ invoices, customers, salesmen }: Pro
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
-          <div className="flex items-center gap-2 mb-2"><ShoppingCart className="w-4 h-4 text-indigo-500" /><p className="text-xs font-bold text-slate-400 uppercase">Invoices</p></div>
-          <p className="text-2xl font-black text-slate-800 dark:text-white">{stats.count}</p>
-          <p className="text-xs text-slate-400 mt-1">{stats.retailCount} retail · {stats.distCount} dist.</p>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-3 md:p-4">
+          <div className="flex items-center gap-1.5 md:gap-2 mb-1.5 md:mb-2"><ShoppingCart className="w-3.5 h-3.5 md:w-4 md:h-4 text-indigo-500" /><p className="text-[10px] md:text-xs font-bold text-slate-400 uppercase">Invoices</p></div>
+          <p className="text-lg md:text-2xl font-black text-slate-800 dark:text-white">{stats.count}</p>
+          <p className="text-[10px] md:text-xs text-slate-400 mt-0.5 md:mt-1">{stats.retailCount} retail · {stats.distCount} dist.</p>
         </div>
-        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
-          <div className="flex items-center gap-2 mb-2"><TrendingUp className="w-4 h-4 text-emerald-500" /><p className="text-xs font-bold text-slate-400 uppercase">Net Sales</p></div>
-          <p className="text-2xl font-black text-emerald-600">{symbol}{stats.totalSales.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
-          <p className="text-xs text-slate-400 mt-1">Disc: {symbol}{stats.totalDiscount.toFixed(2)}</p>
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-3 md:p-4">
+          <div className="flex items-center gap-1.5 md:gap-2 mb-1.5 md:mb-2"><TrendingUp className="w-3.5 h-3.5 md:w-4 md:h-4 text-emerald-500" /><p className="text-[10px] md:text-xs font-bold text-slate-400 uppercase">Net Sales</p></div>
+          <p className="text-lg md:text-2xl font-black text-emerald-600">{symbol}{stats.totalSales.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+          <p className="text-[10px] md:text-xs text-slate-400 mt-0.5 md:mt-1">Disc: {symbol}{stats.totalDiscount.toFixed(2)}</p>
         </div>
-        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
-          <div className="flex items-center gap-2 mb-2"><DollarSign className="w-4 h-4 text-blue-500" /><p className="text-xs font-bold text-slate-400 uppercase">Collected</p></div>
-          <p className="text-2xl font-black text-blue-600">{symbol}{stats.totalPaid.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-3 md:p-4">
+          <div className="flex items-center gap-1.5 md:gap-2 mb-1.5 md:mb-2"><DollarSign className="w-3.5 h-3.5 md:w-4 md:h-4 text-blue-500" /><p className="text-[10px] md:text-xs font-bold text-slate-400 uppercase">Collected</p></div>
+          <p className="text-lg md:text-2xl font-black text-blue-600">{symbol}{stats.totalPaid.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
         </div>
-        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-4">
-          <div className="flex items-center gap-2 mb-2"><Users className="w-4 h-4 text-red-500" /><p className="text-xs font-bold text-slate-400 uppercase">Outstanding</p></div>
-          <p className="text-2xl font-black text-red-500">{symbol}{stats.totalDue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
+        <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 p-3 md:p-4">
+          <div className="flex items-center gap-1.5 md:gap-2 mb-1.5 md:mb-2"><Users className="w-3.5 h-3.5 md:w-4 md:h-4 text-red-500" /><p className="text-[10px] md:text-xs font-bold text-slate-400 uppercase">Outstanding</p></div>
+          <p className="text-lg md:text-2xl font-black text-red-500">{symbol}{stats.totalDue.toLocaleString(undefined, { minimumFractionDigits: 2 })}</p>
         </div>
       </div>
 
       {/* Report type tabs */}
-      <div className="flex gap-2 border-b border-slate-200 dark:border-slate-700">
+      <div className="flex gap-1 md:gap-2 border-b border-slate-200 dark:border-slate-700 overflow-x-auto scrollbar-hide -mx-1 px-1">
         {(['summary', 'product', 'customer', 'salesman'] as const).map(t => (
-          <button key={t} onClick={() => setReportType(t)} className={`px-4 py-2.5 text-sm font-bold border-b-2 transition-colors capitalize ${reportType === t ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}>
+          <button key={t} onClick={() => setReportType(t)} className={`px-3 md:px-4 py-2 md:py-2.5 text-xs md:text-sm font-bold border-b-2 transition-colors capitalize whitespace-nowrap ${reportType === t ? 'border-indigo-500 text-indigo-600' : 'border-transparent text-slate-500 hover:text-slate-700'}`}>
             {t === 'summary' ? 'Invoice List' : t === 'product' ? 'Product-wise' : t === 'customer' ? 'Customer-wise' : 'Salesman-wise'}
           </button>
         ))}
@@ -280,7 +439,7 @@ export default function SalesReportClient({ invoices, customers, salesmen }: Pro
       <div className="bg-white dark:bg-slate-800 rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden">
         <div className="overflow-x-auto">
           {reportType === 'summary' && (
-            <table className="w-full text-sm text-left">
+            <table className="w-full text-sm text-left min-w-[700px]">
               <thead className="bg-slate-50 dark:bg-slate-900/50 text-slate-500 font-bold uppercase text-[10px] tracking-widest">
                 <tr>
                   <th className="px-4 py-3">Invoice #</th>
@@ -311,6 +470,17 @@ export default function SalesReportClient({ invoices, customers, salesmen }: Pro
                   </tr>
                 ))}
               </tbody>
+              {filtered.length > 0 && (
+                <tfoot className="bg-slate-100 dark:bg-slate-900/70 font-black text-sm border-t-2 border-slate-300 dark:border-slate-600">
+                  <tr>
+                    <td colSpan={5} className="px-4 py-3 text-slate-700 dark:text-slate-300">Grand Total ({filtered.length} invoices)</td>
+                    <td className="px-4 py-3 text-right font-black text-slate-800 dark:text-white">{symbol}{stats.totalSales.toFixed(2)}</td>
+                    <td className="px-4 py-3 text-right font-black text-emerald-600">{symbol}{stats.totalPaid.toFixed(2)}</td>
+                    <td className="px-4 py-3 text-right font-black text-red-500">{symbol}{stats.totalDue.toFixed(2)}</td>
+                    <td className="px-4 py-3"></td>
+                  </tr>
+                </tfoot>
+              )}
             </table>
           )}
 
@@ -336,6 +506,15 @@ export default function SalesReportClient({ invoices, customers, salesmen }: Pro
                   </tr>
                 ))}
               </tbody>
+              {productReport.length > 0 && (
+                <tfoot className="bg-slate-100 dark:bg-slate-900/70 font-black text-sm border-t-2 border-slate-300 dark:border-slate-600">
+                  <tr>
+                    <td colSpan={2} className="px-4 py-3 text-slate-700 dark:text-slate-300">Grand Total ({productReport.length} products)</td>
+                    <td className="px-4 py-3 text-right font-black text-indigo-600">{productReport.reduce((s, p) => s + p.qty, 0)}</td>
+                    <td className="px-4 py-3 text-right font-black text-emerald-600">{symbol}{productReport.reduce((s, p) => s + p.revenue, 0).toFixed(2)}</td>
+                  </tr>
+                </tfoot>
+              )}
             </table>
           )}
 
@@ -365,6 +544,17 @@ export default function SalesReportClient({ invoices, customers, salesmen }: Pro
                   </tr>
                 ))}
               </tbody>
+              {customerReport.length > 0 && (
+                <tfoot className="bg-slate-100 dark:bg-slate-900/70 font-black text-sm border-t-2 border-slate-300 dark:border-slate-600">
+                  <tr>
+                    <td colSpan={2} className="px-4 py-3 text-slate-700 dark:text-slate-300">Grand Total ({customerReport.length} customers)</td>
+                    <td className="px-4 py-3 text-right font-black text-indigo-600">{customerReport.reduce((s, c) => s + c.invoices, 0)}</td>
+                    <td className="px-4 py-3 text-right font-black text-emerald-600">{symbol}{customerReport.reduce((s, c) => s + c.revenue, 0).toFixed(2)}</td>
+                    <td className="px-4 py-3 text-right font-black text-blue-600">{symbol}{customerReport.reduce((s, c) => s + c.paid, 0).toFixed(2)}</td>
+                    <td className="px-4 py-3 text-right font-black text-red-500">{symbol}{customerReport.reduce((s, c) => s + (c.revenue - c.paid), 0).toFixed(2)}</td>
+                  </tr>
+                </tfoot>
+              )}
             </table>
           )}
 
@@ -390,6 +580,15 @@ export default function SalesReportClient({ invoices, customers, salesmen }: Pro
                   </tr>
                 ))}
               </tbody>
+              {salesmanReport.length > 0 && (
+                <tfoot className="bg-slate-100 dark:bg-slate-900/70 font-black text-sm border-t-2 border-slate-300 dark:border-slate-600">
+                  <tr>
+                    <td colSpan={2} className="px-4 py-3 text-slate-700 dark:text-slate-300">Grand Total ({salesmanReport.length} salesmen)</td>
+                    <td className="px-4 py-3 text-right font-black text-indigo-600">{salesmanReport.reduce((s, sm) => s + sm.invoices, 0)}</td>
+                    <td className="px-4 py-3 text-right font-black text-emerald-600">{symbol}{salesmanReport.reduce((s, sm) => s + sm.revenue, 0).toFixed(2)}</td>
+                  </tr>
+                </tfoot>
+              )}
             </table>
           )}
         </div>

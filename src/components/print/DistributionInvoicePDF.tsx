@@ -140,8 +140,10 @@ interface DistributionInvoicePDFProps {
       name: string;
     };
     items: Array<{
-      product: { name: string };
-      batch: { batchNumber: string };
+      product?: { name: string };
+      batch?: { batchNumber: string };
+      productName?: string;
+      batchNumber?: string;
       quantity: number;
       salePrice: number;
       subtotal: number;
@@ -241,8 +243,8 @@ export default function DistributionInvoicePDF({
           {invoice.items.map((item, index) => (
             <View key={index} style={styles.tableRow}>
               <Text style={styles.col1}>{index + 1}</Text>
-              <Text style={styles.col2}>{item.product.name}</Text>
-              <Text style={styles.col3}>{item.batch.batchNumber}</Text>
+              <Text style={styles.col2}>{item.product?.name ?? item.productName ?? 'Unknown'}</Text>
+              <Text style={styles.col3}>{item.batch?.batchNumber ?? item.batchNumber ?? '-'}</Text>
               <Text style={styles.col4}>{item.quantity}</Text>
               <Text style={styles.col5}>{currency} {item.salePrice.toFixed(2)}</Text>
               <Text style={styles.col6}>{currency} {item.subtotal.toFixed(2)}</Text>

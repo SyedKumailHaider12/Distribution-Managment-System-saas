@@ -9,14 +9,34 @@ export async function registerOrganization(data: {
   adminName: string;
   username: string;
   password: string;
+  phone?: string;
+  email?: string;
+  address?: string;
+  city?: string;
 }) {
-  const { orgName, adminName, username, password } = data;
+  const { orgName, adminName, username, password, phone, email, address, city } = data;
   console.log('Registering Organization:', orgName);
 
   try {
-    // 1. Create Organization
+    // 1. Create Organization & Default Settings
     const organization = await prisma.organization.create({
-      data: { name: orgName, slug: slugify(orgName) },
+      data: { 
+        name: orgName, 
+        slug: slugify(orgName),
+        phone: phone || null,
+        email: email || null,
+        address: address || null,
+        settings: {
+          create: {
+            companyName: orgName,
+            companyContact: adminName,
+            companyPhone: phone || '',
+            companyEmail: email || '',
+            companyAddress: address || '',
+            companyCity: city || '',
+          }
+        }
+      },
     });
     console.log('Organization created:', organization.id);
 

@@ -31,18 +31,9 @@ export async function getPurchaseReturns() {
   return prisma.purchaseReturn.findMany({
     where: { organizationId: session.organizationId },
     include: {
-      invoice: {
-        include: {
-          supplier: true,
-        },
-      },
+      invoice: { include: { supplier: true } },
       processedByUser: true,
-      items: {
-        include: {
-          product: true,
-          batch: true,
-        },
-      },
+      items: { include: { product: true, batch: true } },
     },
     orderBy: { returnDate: 'desc' },
   });

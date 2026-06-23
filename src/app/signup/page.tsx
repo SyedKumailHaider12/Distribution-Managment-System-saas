@@ -16,7 +16,11 @@ export default function SignupPage() {
     orgName: '',
     adminName: '',
     username: '',
-    password: ''
+    password: '',
+    phone: '',
+    email: '',
+    address: '',
+    city: ''
   });
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
@@ -97,7 +101,7 @@ export default function SignupPage() {
                     value={formData.orgName}
                     onChange={(e) => setFormData({...formData, orgName: e.target.value})}
                     className="w-full h-[44px] pl-12 pr-4 py-3 bg-[#0B1220] border border-white/5 rounded-[12px] text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all text-sm font-medium shadow-inner"
-                    placeholder="e.g. Zafar Medical Store"
+                    placeholder="e.g. Enter Your Organization Name"
                     required
                   />
                 </div>
@@ -114,6 +118,66 @@ export default function SignupPage() {
                     onChange={(e) => setFormData({...formData, adminName: e.target.value})}
                     className="w-full h-[44px] pl-12 pr-4 py-3 bg-[#0B1220] border border-white/5 rounded-[12px] text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all text-sm font-medium shadow-inner"
                     placeholder="e.g. Kumail Rizvi"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Phone */}
+              <div className="space-y-1.5 group">
+                <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">Contact Phone</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={formData.phone}
+                    onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                    className="w-full h-[44px] px-4 py-3 bg-[#0B1220] border border-white/5 rounded-[12px] text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all text-sm font-medium shadow-inner"
+                    placeholder="e.g. +92 300 1234567"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Email */}
+              <div className="space-y-1.5 group">
+                <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">Email Address</label>
+                <div className="relative">
+                  <input
+                    type="email"
+                    value={formData.email}
+                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                    className="w-full h-[44px] px-4 py-3 bg-[#0B1220] border border-white/5 rounded-[12px] text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all text-sm font-medium shadow-inner"
+                    placeholder="e.g. contact@zafarmedical.com"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* City */}
+              <div className="space-y-1.5 group">
+                <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">City</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={formData.city}
+                    onChange={(e) => setFormData({...formData, city: e.target.value})}
+                    className="w-full h-[44px] px-4 py-3 bg-[#0B1220] border border-white/5 rounded-[12px] text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all text-sm font-medium shadow-inner"
+                    placeholder="e.g. Lahore"
+                    required
+                  />
+                </div>
+              </div>
+
+              {/* Address */}
+              <div className="space-y-1.5 group">
+                <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">Full Address</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={formData.address}
+                    onChange={(e) => setFormData({...formData, address: e.target.value})}
+                    className="w-full h-[44px] px-4 py-3 bg-[#0B1220] border border-white/5 rounded-[12px] text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all text-sm font-medium shadow-inner"
+                    placeholder="e.g. 123 Main St, Block B"
                     required
                   />
                 </div>

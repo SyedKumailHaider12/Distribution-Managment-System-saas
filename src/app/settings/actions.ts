@@ -77,7 +77,7 @@ export async function getOrganizationSettings(): Promise<OrganizationSettings> {
 
 export async function saveOrganizationSettings(data: Partial<OrganizationSettings>) {
   const session = await getSession()
-  if (!session) throw new Error('Unauthorized')
+  if (!session) return { success: false, error: 'Unauthorized' }
 
   await prisma.settings.upsert({
     where: { organizationId: session.organizationId },
@@ -123,6 +123,7 @@ export async function saveOrganizationSettings(data: Partial<OrganizationSetting
   })
 
   revalidatePath('/settings')
+  return { success: true }
 }
 
 // Legacy helper kept for layout.tsx theme reading (server-side)

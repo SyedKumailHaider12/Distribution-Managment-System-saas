@@ -141,6 +141,11 @@ export default function PurchasesClient({
   // 'pack' = user enters per-pack price, system divides by packSize
   const [salePriceMode, setSalePriceMode] = useState<'unit' | 'pack'>('unit');
 
+  // Product Purchase History State
+  const [purchaseHistory, setPurchaseHistory] = useState<any[]>([]);
+  const [showHistory, setShowHistory] = useState(false);
+  const [loadingHistory, setLoadingHistory] = useState(false);
+
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
@@ -204,7 +209,7 @@ export default function PurchasesClient({
   }, [invoiceData.categoryId, categories]);
 
   const isMedicine = selectedCategoryName.toLowerCase().includes('medicine');
-  const needsBatch = isMedicine || selectedCategoryName.toLowerCase().includes('tablet') || selectedCategoryName.toLowerCase().includes('capsule');
+  const needsBatch = true; // Batch number & expiry must be enabled for all categories
 
   const handleSupplierChange = (supplierId: string) => {
     const supplier = suppliers.find(s => s.id.toString() === supplierId)
@@ -254,7 +259,7 @@ export default function PurchasesClient({
     };
   }, [currentItem.productName]);
 
-  const selectSuggestion = (s: any) => {
+  const selectSuggestion = async (s: any) => {
     const matchedCat = categories.find(c => c.name.toLowerCase() === (s.categoryName || '').toLowerCase());
     
     setCurrentItem({
@@ -266,6 +271,45 @@ export default function PurchasesClient({
       isNewProduct: s.source === 'excel'
     });
     setShowSuggestions(false);
+
+    // Load purchase history if product exists in DB
+    if (s.id && s.source === 'db') {
+      setLoadingHistory(true);
+      try {
+        const res = await fetch(`/api/products/history?productId=${s.id}`);
+        const data = await res.json();
+        if (data.history && data.history.length > 0) {
+          setPurchaseHistory(data.history);
+          setShowHistory(true);
+        } else {
+          setPurchaseHistory([]);
+          setShowHistory(false);
+        }
+      } catch (err) {
+        console.error('Failed to load history', err);
+        setPurchaseHistory([]);
+      } finally {
+        setLoadingHistory(false);
+      }
+    } else {
+      setPurchaseHistory([]);
+      setShowHistory(false);
+    }
+  };
+
+  const selectHistoryRecord = (record: any) => {
+    // Auto-fill from previous purchase
+    setCurrentItem(prev => ({
+      ...prev,
+      batchNumber: record.batchNumber || '',
+      expiryDate: record.expiryDate ? new Date(record.expiryDate).toISOString().split('T')[0] : '',
+      packSize: '1', // We don't have original pack size in history, user needs to enter
+      boxPrice: record.purchasePrice || '0',
+      purchasePrice: record.purchasePrice || '0',
+      salePriceRetail: record.salePriceRetail?.toString() || '0',
+      salePriceDistribution: record.salePriceDistribution?.toString() || '0',
+    }));
+    setShowHistory(false);
   };
 
   const addItemToTable = () => {
@@ -292,7 +336,7 @@ export default function PurchasesClient({
       perUnitDistribution = Number(currentItem.salePriceDistribution) || 0;
     }
 
-    const finalItem = {
+    const finalItem: any = {
       ...currentItem,
       quantity: totalUnits.toString(),
       purchasePrice: perUnitPrice.toFixed(4),
@@ -622,6 +666,50 @@ export default function PurchasesClient({
                           </div>
                         </button>
                       ))}
+                    </div>
+                  )}
+
+                  {/* Purchase History Dropdown */}
+                  {loadingHistory && (
+                    <div className="absolute z-50 w-full mt-1 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl shadow-xl p-3 flex items-center gap-2 text-slate-500 text-sm">
+                      <Loader2 className="w-4 h-4 animate-spin text-indigo-500" /> Loading purchase history...
+                    </div>
+                  )}
+                  {showHistory && purchaseHistory.length > 0 && (
+                    <div className="absolute z-50 w-full mt-1 bg-white dark:bg-slate-800 border-2 border-amber-300 dark:border-amber-700 rounded-xl shadow-2xl overflow-hidden">
+                      <div className="px-4 py-2 bg-amber-50 dark:bg-amber-900/20 border-b border-amber-200 dark:border-amber-700 flex items-center justify-between">
+                        <span className="text-xs font-black text-amber-700 dark:text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                          <Receipt className="w-3.5 h-3.5" /> Previous Purchase Records
+                        </span>
+                        <button onClick={() => setShowHistory(false)} className="text-amber-500 hover:text-amber-700 text-xs font-bold">✕ Close</button>
+                      </div>
+                      <div className="max-h-56 overflow-y-auto">
+                        {purchaseHistory.map((rec: any, idx: number) => (
+                          <button
+                            key={idx}
+                            onClick={() => selectHistoryRecord(rec)}
+                            className="w-full text-left px-4 py-3 hover:bg-amber-50 dark:hover:bg-amber-900/20 border-b border-slate-50 dark:border-slate-700 last:border-0 transition-colors"
+                          >
+                            <div className="flex items-center justify-between mb-1">
+                              <span className="text-xs font-bold text-slate-700 dark:text-slate-200">
+                                {new Date(rec.invoiceDate).toLocaleDateString()} — {rec.invoiceNumber}
+                              </span>
+                              <span className="text-[10px] bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400 px-2 py-0.5 rounded font-bold">
+                                Batch: {rec.batchNumber}
+                              </span>
+                            </div>
+                            <div className="flex flex-wrap gap-3 text-[11px] text-slate-500">
+                              <span className="font-bold text-indigo-600">Purchase: {currency}{Number(rec.purchasePrice).toFixed(2)}/unit</span>
+                              <span className="text-emerald-600">Retail: {currency}{Number(rec.salePriceRetail).toFixed(2)}</span>
+                              <span className="text-amber-600">Dist: {currency}{Number(rec.salePriceDistribution).toFixed(2)}</span>
+                              <span>Qty: {rec.quantity}</span>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                      <div className="px-4 py-2 bg-slate-50 dark:bg-slate-900/50 text-[10px] text-slate-400 italic">
+                        Click a record to auto-fill prices. You can still modify manually.
+                      </div>
                     </div>
                   )}
                 </div>

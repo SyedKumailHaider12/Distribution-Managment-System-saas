@@ -86,6 +86,7 @@ export default function NewSalePage() {
 
   // Data
   const [customers, setCustomers] = useState<Customer[]>([]);
+  const [walkInCustomer, setWalkInCustomer] = useState<Customer | null>(null);
   const [salesmen, setSalesmen] = useState<Salesman[]>([]);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -133,7 +134,10 @@ export default function NewSalePage() {
         getWarehouses(),
       ]);
 
-      setCustomers([...(walkIn ? [walkIn] : []), ...custData]);
+      // Distribution customers only (no walk-in)
+      setCustomers(custData);
+      // Keep walk-in separate for retail auto-select
+      setWalkInCustomer(walkIn || null);
       setSalesmen(salesData);
       setWarehouses(warehouseData);
       
@@ -146,6 +150,7 @@ export default function NewSalePage() {
         loadProducts(warehouseData[0].id);
       }
 
+      // Retail: auto-select walk-in customer
       if (walkIn) {
         setSelectedCustomerId(walkIn.id);
       }
@@ -328,7 +333,10 @@ export default function NewSalePage() {
         // Thermal slip print
         setPrintInvoice(fullInvoice);
         setShowPrintPreview(true);
-        setTimeout(() => window.print(), 500);
+        setTimeout(() => {
+          window.print();
+          setShowPrintPreview(false);
+        }, 500);
       } else {
         // PDF generation for distribution
         const pdfDoc = <DistributionInvoicePDF
@@ -369,6 +377,7 @@ export default function NewSalePage() {
       paidAmount: 0,
       items: items.map((item) => ({
         productName: item.productName,
+        batchNumber: item.batchNumber,
         quantity: item.quantity,
         salePrice: item.salePrice,
         subtotal: item.quantity * item.salePrice - item.discount,
@@ -378,7 +387,10 @@ export default function NewSalePage() {
     if (saleType === 'retail') {
       setPrintInvoice({ ...estimateData, branch: { organization: {} } });
       setShowPrintPreview(true);
-      setTimeout(() => window.print(), 500);
+      setTimeout(() => {
+        window.print();
+        setShowPrintPreview(false);
+      }, 500);
     } else {
       // Distribution estimate — build a quick PDF
       try {
@@ -403,9 +415,21 @@ export default function NewSalePage() {
 
   // Submit sale
   const handleSubmit = async () => {
-    if (!selectedCustomerId || !selectedSalesmanId || !selectedWarehouseId || items.length === 0) {
-      alert('Please fill in all required fields (Customer, Salesman, Warehouse, Items)');
+    if (!selectedWarehouseId || items.length === 0) {
+      alert('Please fill in all required fields (Warehouse, Items)');
       return;
+    }
+
+    // For distribution, customer and salesman are required
+    if (saleType === 'distribution') {
+      if (!selectedCustomerId) {
+        alert('Please select a customer for distribution sale');
+        return;
+      }
+      if (!selectedSalesmanId) {
+        alert('Please select a salesman for distribution sale');
+        return;
+      }
     }
 
     setLoading(true);
@@ -418,8 +442,8 @@ export default function NewSalePage() {
       }));
 
       const result = await createSalesInvoice({
-        customerId: selectedCustomerId,
-        salesmanId: selectedSalesmanId,
+        customerId: saleType === 'distribution' ? selectedCustomerId! : undefined,
+        salesmanId: selectedSalesmanId || 1, // retail can proceed without salesman
         warehouseId: selectedWarehouseId,
         branchId: 1,
         saleType,
@@ -432,6 +456,20 @@ export default function NewSalePage() {
       // Auto-print after sale
       if (result.invoice) {
         await handlePrint(result.invoice.id, saleType);
+      }
+
+      // Clear cart
+      setItems([]);
+      setDiscountValue(0);
+      setAmountTendered(0);
+      setSelectedProduct(null);
+      setProductSearch('');
+      setSelectedBatchId(null);
+      setEntryQuantity(1);
+      setEntryDiscount(0);
+      if (saleType === 'distribution') {
+        setSelectedCustomerId(null);
+        setSelectedSalesmanId(null);
       }
 
       router.push('/sales');
@@ -473,7 +511,11 @@ export default function NewSalePage() {
             Drafts ({drafts.length})
           </button>
           <button
-            onClick={() => setSaleType('retail')}
+            onClick={() => {
+              setSaleType('retail');
+              // Auto-select walk-in for retail
+              if (walkInCustomer) setSelectedCustomerId(walkInCustomer.id);
+            }}
             className={`px-4 py-2 rounded-xl font-medium transition-all ${
               saleType === 'retail'
                 ? 'bg-indigo-500 text-white'
@@ -483,7 +525,11 @@ export default function NewSalePage() {
             Retail
           </button>
           <button
-            onClick={() => setSaleType('distribution')}
+            onClick={() => {
+              setSaleType('distribution');
+              // Clear customer when switching to distribution (no walk-in)
+              setSelectedCustomerId(null);
+            }}
             className={`px-4 py-2 rounded-xl font-medium transition-all ${
               saleType === 'distribution'
                 ? 'bg-purple-500 text-white'
@@ -545,18 +591,25 @@ export default function NewSalePage() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div>
           <label className="block text-sm font-medium text-slate-400 mb-2">Customer</label>
-          <select
-            value={selectedCustomerId || ''}
-            onChange={(e) => setSelectedCustomerId(Number(e.target.value))}
-            className="w-full px-4 py-2.5 bg-slate-800/50 border border-slate-700 rounded-xl text-white"
-          >
-            <option value="">Select Customer</option>
-            {customers.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.name} {c.isWalkIn ? '(Walk-in)' : ''}
-              </option>
-            ))}
-          </select>
+          {saleType === 'retail' ? (
+            <div className="w-full px-4 py-2.5 bg-slate-800/30 border border-slate-700 rounded-xl text-slate-300 flex items-center gap-2">
+              <span className="text-xs bg-indigo-500/20 text-indigo-400 px-2 py-0.5 rounded font-medium">Walk-in</span>
+              {walkInCustomer?.name || 'Walk-in Customer'}
+            </div>
+          ) : (
+            <select
+              value={selectedCustomerId || ''}
+              onChange={(e) => setSelectedCustomerId(Number(e.target.value))}
+              className="w-full px-4 py-2.5 bg-slate-800/50 border border-slate-700 rounded-xl text-white"
+            >
+              <option value="">Select Customer</option>
+              {customers.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
         <div>
           <label className="block text-sm font-medium text-slate-400 mb-2">Salesman *</label>
@@ -909,7 +962,7 @@ export default function NewSalePage() {
 
       {/* Thermal Slip Preview (hidden, only for printing) */}
       {showPrintPreview && printInvoice && saleType === 'retail' && (
-        <div style={{ position: 'absolute', left: '-9999px' }}>
+        <div className="hidden print:block absolute left-0 top-0 w-full bg-white z-50">
           <RetailThermalSlip
             invoice={{
               invoiceNumber: printInvoice.invoiceNumber,

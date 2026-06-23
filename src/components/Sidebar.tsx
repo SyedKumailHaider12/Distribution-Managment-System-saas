@@ -11,40 +11,40 @@ import {
 import { useAuth } from './AuthProvider';
 
 const MENU_ITEMS = [
-  { section: 'MAIN', items: [
+  { section: 'MAIN', moduleId: 'dashboard', items: [
     { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' }
   ]},
-  { section: 'INVENTORY', items: [
+  { section: 'INVENTORY', moduleId: 'inventory', items: [
     { name: 'Purchase', icon: ShoppingCart, path: '/purchases' },
     { name: 'Stock', icon: Warehouse, path: '/stock' },
     { name: 'Categories', icon: Tags, path: '/categories' },
     { name: 'Batches', icon: Layers, path: '/batches' },
   ]},
-  { section: 'TRANSACTIONS', items: [
+  { section: 'TRANSACTIONS', moduleId: 'sales', items: [
     { name: 'Sales Invoices', icon: Receipt, path: '/sales' },
     { name: 'Deliveries', icon: Truck, path: '/deliveries' },
   ]},
-  { section: 'RETURNS', items: [
+  { section: 'RETURNS', moduleId: 'returns', items: [
     { name: 'Customer Returns', icon: RotateCcw, path: '/returns/sales' },
     { name: 'Company Returns', icon: CornerDownLeft, path: '/returns/purchase' },
   ]},
-  { section: 'PEOPLE', items: [
+  { section: 'PEOPLE', moduleId: 'people', items: [
     { name: 'Customers', icon: Users, path: '/customers' },
     { name: 'Suppliers', icon: Building2, path: '/suppliers' },
     { name: 'Salesmen', icon: UserCheck, path: '/salesmen' },
     { name: 'Employees', icon: User, path: '/employees' },
   ]},
-  { section: 'MASTER DATA', items: [
+  { section: 'MASTER DATA', moduleId: 'master_data', items: [
     { name: 'Companies', icon: Building, path: '/companies' },
     { name: 'Warehouses', icon: Warehouse, path: '/warehouses' },
   ]},
-  { section: 'REPORTS', items: [
+  { section: 'REPORTS', moduleId: 'reports', items: [
     { name: 'Sales Report', icon: Receipt, path: '/reports/sales' },
     { name: 'Purchase Report', icon: ShoppingCart, path: '/reports/purchase' },
     { name: 'Stock Report', icon: Package, path: '/reports/stock' },
     { name: 'Audit Logs', icon: FileText, path: '/audit' },
   ]},
-  { section: 'SYSTEM', items: [
+  { section: 'SYSTEM', moduleId: 'settings', items: [
     { name: 'Users', icon: Shield, path: '/users' },
     { name: 'Settings', icon: Settings, path: '/settings' },
   ]},
@@ -58,6 +58,7 @@ interface SidebarProps {
     username: string;
     role: string;
     fullName: string | null;
+    permissions?: string[];
   };
 }
 
@@ -94,11 +95,15 @@ export function Sidebar({ isOpen, toggleSidebar, user }: SidebarProps) {
 
         {/* Navigation */}
         <nav className="p-4 space-y-6 flex-1 overflow-y-auto scrollbar-none">
-          {MENU_ITEMS.map((section, idx) => (
-            <div key={idx}>
-              <h3 className="px-3 mb-2 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-                {section.section}
-              </h3>
+          {MENU_ITEMS.map((section, idx) => {
+            const hasPermission = user.permissions?.includes('*') || user.permissions?.includes(section.moduleId);
+            if (!hasPermission) return null;
+
+            return (
+              <div key={idx}>
+                <h3 className="px-3 mb-2 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+                  {section.section}
+                </h3>
               <div className="space-y-1">
                 {section.items.map((item, i) => {
                   const isActive = pathname === item.path;
@@ -121,9 +126,10 @@ export function Sidebar({ isOpen, toggleSidebar, user }: SidebarProps) {
                     </Link>
                   )
                 })}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </nav>
 
         {/* User Section */}

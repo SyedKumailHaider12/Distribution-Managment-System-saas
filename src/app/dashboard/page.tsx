@@ -4,11 +4,12 @@ import React, { useEffect, useState } from 'react';
 import { LayoutDashboard, ShoppingCart, Package, Users, TrendingUp, AlertTriangle, ArrowUpRight, ArrowDownRight, DollarSign, X, FileDown } from 'lucide-react';
 import Link from 'next/link';
 import { useCurrency } from '@/contexts/CurrencyContext';
-import { getDashboardOutstandingData } from './actions';
+import { getDashboardOutstandingData, getDashboardReceivablesData, getDashboardKPIs } from './actions';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
+  const [hasAccess, setHasAccess] = useState(true);
   const [kpis, setKPIs] = useState({
     todaySales: 0,
     monthSales: 0,
@@ -17,23 +18,52 @@ export default function DashboardPage() {
     lowStock: 0,
     expiring: 0,
     totalCustomers: 0,
-    totalOrders: 0
+    totalOrders: 0,
+    organizationName: '',
+    subscriptionStatus: 'TRIAL',
+    trialEndsAt: null as Date | string | null
   });
   
   const [outstandingData, setOutstandingData] = useState<{totalOutstanding: number, suppliersOutstanding: any[]}>({
     totalOutstanding: 0,
     suppliersOutstanding: []
   });
+
+  const [receivablesData, setReceivablesData] = useState<{totalReceivables: number, customersReceivables: any[]}>({
+    totalReceivables: 0,
+    customersReceivables: []
+  });
   
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isReceivablesModalOpen, setIsReceivablesModalOpen] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
       try {
-        const outData = await getDashboardOutstandingData();
+        const [outData, recData, kpiData] = await Promise.all([
+          getDashboardOutstandingData(),
+          getDashboardReceivablesData(),
+          getDashboardKPIs(),
+        ]);
         setOutstandingData(outData);
-        setKPIs(prev => ({ ...prev, payables: outData.totalOutstanding }));
-      } catch (e) {
+        setReceivablesData(recData);
+        setKPIs(prev => ({
+          ...prev,
+          payables: outData.totalOutstanding,
+          receivables: recData.totalReceivables,
+          todaySales: kpiData.todaySales,
+          monthSales: kpiData.monthSales,
+          totalCustomers: kpiData.totalCustomers,
+          lowStock: kpiData.lowStock,
+          expiring: kpiData.expiring,
+          organizationName: kpiData.organizationName,
+          subscriptionStatus: kpiData.subscriptionStatus,
+          trialEndsAt: kpiData.trialEndsAt,
+        }));
+      } catch (e: any) {
+        if (e.message?.includes('Unauthorized')) {
+          setHasAccess(false);
+        }
         console.error(e);
       }
       setLoading(false);
@@ -63,7 +93,7 @@ export default function DashboardPage() {
   const kpiCards = [
     { title: "Today's Sales", value: `${symbol} ${kpis.todaySales.toLocaleString()}`, icon: TrendingUp, color: 'text-emerald-600', bg: 'bg-emerald-100 dark:bg-emerald-900/20' },
     { title: 'This Month', value: `${symbol} ${kpis.monthSales.toLocaleString()}`, icon: DollarSign, color: 'text-blue-600', bg: 'bg-blue-100 dark:bg-blue-900/20' },
-    { title: 'Receivables', value: `${symbol} ${kpis.receivables.toLocaleString()}`, icon: ArrowUpRight, color: 'text-amber-600', bg: 'bg-amber-100 dark:bg-amber-900/20' },
+    { title: 'Receivables', value: `${symbol} ${kpis.receivables.toLocaleString()}`, icon: ArrowUpRight, color: 'text-amber-600', bg: 'bg-amber-100 dark:bg-amber-900/20', onClick: () => setIsReceivablesModalOpen(true), clickable: true },
     { title: 'Total Payables', value: `${symbol} ${kpis.payables.toLocaleString()}`, icon: ArrowDownRight, color: 'text-red-600', bg: 'bg-red-100 dark:bg-red-900/20', onClick: () => setIsModalOpen(true), clickable: true },
     { title: 'Low Stock', value: kpis.lowStock, icon: AlertTriangle, color: 'text-orange-600', bg: 'bg-orange-100 dark:bg-orange-900/20' },
     { title: 'Customers', value: kpis.totalCustomers, icon: Users, color: 'text-cyan-600', bg: 'bg-cyan-100 dark:bg-cyan-900/20' },
@@ -81,9 +111,17 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* KPI Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        {kpiCards.map((kpi, idx) => {
+      {!hasAccess ? (
+        <div className="bg-white dark:bg-slate-800 rounded-3xl p-12 text-center border border-slate-200 dark:border-slate-700">
+          <AlertTriangle className="w-16 h-16 mx-auto mb-4 text-slate-400 opacity-50" />
+          <h2 className="text-2xl font-bold text-slate-700 dark:text-slate-300">Access Restricted</h2>
+          <p className="text-slate-500 mt-2">You do not have permission to view the dashboard.</p>
+        </div>
+      ) : (
+        <>
+          {/* KPI Cards */}
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+            {kpiCards.map((kpi, idx) => {
           const Icon = kpi.icon;
           return (
             <div 
@@ -162,16 +200,30 @@ export default function DashboardPage() {
           <h3 className="text-lg font-semibold text-slate-800 dark:text-white mb-4">System Info</h3>
           <div className="space-y-3">
             <div className="flex justify-between">
+              <span className="text-slate-500 dark:text-slate-400">Organization</span>
+              <span className="font-bold text-indigo-600 dark:text-indigo-400">{kpis.organizationName}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-slate-500 dark:text-slate-400">Plan Status</span>
+              <span className={`font-medium ${kpis.subscriptionStatus === 'ACTIVE' ? 'text-emerald-600 dark:text-emerald-400' : kpis.subscriptionStatus === 'EXPIRED' ? 'text-red-600 dark:text-red-400' : 'text-amber-600 dark:text-amber-400'}`}>
+                {kpis.subscriptionStatus}
+              </span>
+            </div>
+            {kpis.subscriptionStatus === 'TRIAL' && (
+              <div className="flex justify-between">
+                <span className="text-slate-500 dark:text-slate-400">Trial Days Left</span>
+                <span className="font-medium text-amber-600 dark:text-amber-400">
+                  {kpis.trialEndsAt ? Math.max(0, Math.ceil((new Date(kpis.trialEndsAt).getTime() - new Date().getTime()) / (1000 * 3600 * 24))) : 7} Days
+                </span>
+              </div>
+            )}
+            <div className="flex justify-between">
               <span className="text-slate-500 dark:text-slate-400">Currency</span>
               <span className="font-medium text-slate-800 dark:text-white">{currency} ({symbol})</span>
             </div>
             <div className="flex justify-between">
               <span className="text-slate-500 dark:text-slate-400">Version</span>
               <span className="font-medium text-slate-800 dark:text-white">1.0.0</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-slate-500 dark:text-slate-400">Status</span>
-              <span className="font-medium text-emerald-600 dark:text-emerald-400">Active</span>
             </div>
           </div>
         </div>
@@ -263,6 +315,95 @@ export default function DashboardPage() {
           </div>
         )}
       </AnimatePresence>
+
+      {/* Receivables Modal */}
+      <AnimatePresence>
+        {isReceivablesModalOpen && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm">
+            <motion.div 
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="bg-white dark:bg-slate-800 w-full max-w-4xl rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]"
+            >
+              <div className="p-6 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
+                <div>
+                  <h2 className="text-2xl font-bold text-slate-800 dark:text-white flex items-center gap-3">
+                    <ArrowUpRight className="w-6 h-6 text-amber-500" /> Total Outstanding Receivables
+                  </h2>
+                  <p className="text-sm text-slate-500 mt-1">Customer payments pending for distribution sales.</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <Link href="/customers" className="flex items-center gap-2 px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition-colors font-medium">
+                    <Users className="w-4 h-4" /> View Customers
+                  </Link>
+                  <button onClick={() => setIsReceivablesModalOpen(false)} className="p-2 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-full transition-colors text-slate-500">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+
+              <div className="p-6 overflow-y-auto flex-1">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                  <div className="p-4 bg-amber-50 dark:bg-amber-900/10 rounded-xl border border-amber-100 dark:border-amber-900/30">
+                    <p className="text-xs font-bold text-amber-500 uppercase">Total Receivables</p>
+                    <p className="text-3xl font-black text-amber-700 dark:text-amber-400 mt-1">{currency}{receivablesData.totalReceivables.toLocaleString(undefined, {minimumFractionDigits:2})}</p>
+                  </div>
+                  <div className="p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-800">
+                    <p className="text-xs font-bold text-slate-500 uppercase">Customers with Due</p>
+                    <p className="text-3xl font-black text-slate-800 dark:text-white mt-1">{receivablesData.customersReceivables.length}</p>
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto border border-slate-200 dark:border-slate-700 rounded-xl">
+                  <table className="w-full text-left text-sm whitespace-nowrap">
+                    <thead className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400">
+                      <tr>
+                        <th className="px-6 py-4 font-semibold">Customer</th>
+                        <th className="px-6 py-4 font-semibold">Contact Info</th>
+                        <th className="px-6 py-4 font-semibold text-center">Pending Invoices</th>
+                        <th className="px-6 py-4 font-semibold text-right">Amount Due</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                      {receivablesData.customersReceivables.map((cust, idx) => (
+                        <tr key={idx} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/50 transition-colors">
+                          <td className="px-6 py-4">
+                            <p className="font-bold text-slate-800 dark:text-white">{cust.customerName}</p>
+                            {cust.address && <p className="text-[10px] text-slate-500">{cust.address}</p>}
+                          </td>
+                          <td className="px-6 py-4 text-slate-600 dark:text-slate-300">
+                            {cust.phone || 'N/A'}
+                          </td>
+                          <td className="px-6 py-4 text-center">
+                            <span className="bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-full text-xs font-bold text-slate-600 dark:text-slate-400">
+                              {cust.invoiceCount} invoices
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <span className="font-black text-amber-600 dark:text-amber-400">
+                              {currency}{cust.totalDue.toLocaleString(undefined, {minimumFractionDigits:2})}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                      {receivablesData.customersReceivables.length === 0 && (
+                        <tr>
+                          <td colSpan={4} className="px-6 py-8 text-center text-slate-500">
+                            No outstanding receivables found.
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+        </>
+      )}
     </div>
   );
 }

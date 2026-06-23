@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { Plus, Search, Filter, Eye, FileText, Printer, Download, CreditCard, RotateCcw, X, Trash2, Package, CheckCircle2, ShoppingCart, User as UserIcon, Save } from 'lucide-react';
-import { createSalesInvoice, getProductsWithStock, deleteSalesInvoice } from './actions';
+import { Plus, Search, Filter, Eye, FileText, Printer, Download, CreditCard, RotateCcw, X, Trash2, Package, CheckCircle2, ShoppingCart, User as UserIcon, Save, Receipt } from 'lucide-react';
+import { createSalesInvoice, getProductsWithStock, deleteSalesInvoice, recordSalesPayment } from './actions';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { SearchableProductDropdown } from '@/components/SearchableProductDropdown';
@@ -82,6 +82,17 @@ export function SalesClient({
   const [success, setSuccess] = useState(false);
   const [isLoadingStock, setIsLoadingStock] = useState(false);
   const [printData, setPrintData] = useState<any>(null);
+
+  // Payment Modal State
+  const [paymentModal, setPaymentModal] = useState({
+    isOpen: false,
+    invoiceId: 0,
+    invoiceNumber: '',
+    maxAmount: 0,
+    amount: '',
+    method: 'CASH',
+    isSubmitting: false
+  });
 
   // Auto-select Walk-in Customer for Retail
   useEffect(() => {
@@ -220,6 +231,23 @@ export function SalesClient({
       }
     } catch (error) {
       alert('Error deleting invoice');
+    }
+  };
+
+  const handleRecordPayment = async () => {
+    if (!paymentModal.amount || Number(paymentModal.amount) <= 0) return alert('Invalid amount');
+    if (Number(paymentModal.amount) > paymentModal.maxAmount) return alert('Amount exceeds outstanding balance');
+    
+    setPaymentModal(p => ({ ...p, isSubmitting: true }));
+    const res = await recordSalesPayment(paymentModal.invoiceId, Number(paymentModal.amount), paymentModal.method);
+    
+    if (res.success) {
+      alert('Payment recorded successfully');
+      setInvoices(invoices.map(inv => inv.id === paymentModal.invoiceId ? { ...inv, paidAmount: res.result.newPaidAmount, status: res.result.newStatus } : inv));
+      setPaymentModal(p => ({ ...p, isOpen: false, isSubmitting: false, amount: '' }));
+    } else {
+      alert(res.error || 'Failed to record payment');
+      setPaymentModal(p => ({ ...p, isSubmitting: false }));
     }
   };
 
@@ -723,18 +751,40 @@ export function SalesClient({
                       <td className="px-6 py-4 text-right text-emerald-600 dark:text-emerald-400 font-bold">{symbol}{inv.paidAmount.toFixed(2)}</td>
                       <td className="px-6 py-4">{getStatusBadge(inv.status)}</td>
                       <td className="px-6 py-4 text-center">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (confirm(`Delete invoice ${inv.invoiceNumber}?`)) {
-                              handleDeleteInvoice(inv.id);
-                            }
-                          }}
-                          className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
-                          title="Delete Invoice"
-                        >
-                          <Trash2 size={16} />
-                        </button>
+                        <div className="flex items-center justify-center gap-2">
+                          {inv.paidAmount < inv.netAmount && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setPaymentModal({
+                                  isOpen: true,
+                                  invoiceId: inv.id,
+                                  invoiceNumber: inv.invoiceNumber,
+                                  maxAmount: inv.netAmount - inv.paidAmount,
+                                  amount: '',
+                                  method: 'CASH',
+                                  isSubmitting: false
+                                });
+                              }}
+                              className="p-2 text-emerald-500 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors"
+                              title="Record Payment"
+                            >
+                              <Receipt size={16} />
+                            </button>
+                          )}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (confirm(`Delete invoice ${inv.invoiceNumber}?`)) {
+                                handleDeleteInvoice(inv.id);
+                              }
+                            }}
+                            className="p-2 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+                            title="Delete Invoice"
+                          >
+                            <Trash2 size={16} />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -744,6 +794,81 @@ export function SalesClient({
           </table>
         </div>
       </div>
+
+      {/* Record Payment Modal */}
+      <AnimatePresence>
+        {paymentModal.isOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center">
+            <motion.div 
+              initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+              className="absolute inset-0 bg-slate-900/50 backdrop-blur-sm"
+              onClick={() => !paymentModal.isSubmitting && setPaymentModal(p => ({ ...p, isOpen: false }))}
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }}
+              className="relative w-full max-w-md bg-white dark:bg-slate-800 rounded-2xl shadow-xl overflow-hidden"
+            >
+              <div className="px-6 py-4 border-b border-slate-100 dark:border-slate-700 flex justify-between items-center">
+                <h2 className="text-xl font-bold flex items-center gap-2"><Receipt className="w-5 h-5 text-indigo-500" /> Record Payment</h2>
+                <button onClick={() => !paymentModal.isSubmitting && setPaymentModal(p => ({ ...p, isOpen: false }))} className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300">
+                  <X size={20} />
+                </button>
+              </div>
+              
+              <div className="p-6 space-y-4">
+                <div className="p-4 bg-indigo-50 dark:bg-indigo-900/20 text-indigo-800 dark:text-indigo-300 rounded-xl text-sm border border-indigo-100 dark:border-indigo-800/50">
+                  Recording payment for Invoice <b>#{paymentModal.invoiceNumber}</b>. <br/>
+                  Outstanding balance: <b className="text-emerald-600 dark:text-emerald-400">{symbol}{(paymentModal.maxAmount).toFixed(2)}</b>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Payment Amount</label>
+                  <div className="relative">
+                    <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 font-bold">{symbol}</span>
+                    <input 
+                      type="number" 
+                      max={paymentModal.maxAmount} 
+                      className="w-full pl-8 pr-4 py-3 border rounded-xl dark:bg-slate-900 dark:border-slate-700 focus:ring-2 focus:ring-indigo-500/20 font-bold" 
+                      value={paymentModal.amount} 
+                      onChange={e => setPaymentModal({...paymentModal, amount: e.target.value})} 
+                    />
+                  </div>
+                </div>
+
+                <div>
+                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 block">Payment Method</label>
+                  <select 
+                    className="w-full px-4 py-3 border rounded-xl dark:bg-slate-900 dark:border-slate-700 focus:ring-2 focus:ring-indigo-500/20 font-medium" 
+                    value={paymentModal.method} 
+                    onChange={e => setPaymentModal({...paymentModal, method: e.target.value})}
+                  >
+                    <option value="CASH">Cash</option>
+                    <option value="BANK">Bank Transfer</option>
+                    <option value="CARD">Card Payment</option>
+                    <option value="CHEQUE">Cheque</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="px-6 py-4 bg-slate-50 dark:bg-slate-900/50 border-t border-slate-100 dark:border-slate-700 flex justify-end gap-3">
+                <button 
+                  onClick={() => setPaymentModal({...paymentModal, isOpen: false})} 
+                  className="px-4 py-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg font-medium"
+                >
+                  Cancel
+                </button>
+                <button 
+                  disabled={paymentModal.isSubmitting} 
+                  onClick={handleRecordPayment} 
+                  className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-bold disabled:opacity-50"
+                >
+                  {paymentModal.isSubmitting ? 'Recording...' : 'Record Payment'}
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

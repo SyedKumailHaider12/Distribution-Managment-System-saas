@@ -1,12 +1,12 @@
 'use server';
 
 import { prisma } from '@/lib/prisma';
-import { getSession, hashPassword } from '@/lib/auth';
+import { hashPassword } from '@/lib/auth';
+import { requirePermissionForAction } from '@/lib/authorization';
 import { revalidatePath } from 'next/cache';
 
 export async function getEmployees() {
-  const session = await getSession();
-  if (!session) throw new Error('Unauthorized');
+  const session = await requirePermissionForAction('people');
   return prisma.employee.findMany({
     where: { organizationId: session.organizationId },
     include: {
@@ -19,8 +19,7 @@ export async function getEmployees() {
 }
 
 export async function getEmployeeById(id: number) {
-  const session = await getSession();
-  if (!session) throw new Error('Unauthorized');
+  const session = await requirePermissionForAction('people');
   return prisma.employee.findUnique({
     where: { 
       id,
@@ -51,9 +50,9 @@ export async function createEmployee(data: {
   branchId: number;
   username?: string;
   password?: string;
+  joinDate?: Date;
 }) {
-  const session = await getSession();
-  if (!session) throw new Error('Unauthorized');
+  const session = await requirePermissionForAction('people');
 
   const { name, employeeCode, role, phone, baseSalary, branchId, username, password } = data;
   const organizationId = session.organizationId;
@@ -72,6 +71,7 @@ export async function createEmployee(data: {
       role,
       phone,
       baseSalary: baseSalary || 0,
+      joinDate: data.joinDate || new Date(),
       branchId,
       organizationId,
     },
@@ -118,9 +118,9 @@ export async function updateEmployee(id: number, data: {
   phone?: string;
   baseSalary?: number;
   isActive?: boolean;
+  joinDate?: Date;
 }) {
-  const session = await getSession();
-  if (!session) throw new Error('Unauthorized');
+  const session = await requirePermissionForAction('people');
 
   const employee = await prisma.employee.update({
     where: { 
@@ -135,8 +135,7 @@ export async function updateEmployee(id: number, data: {
 }
 
 export async function deleteEmployee(id: number) {
-  const session = await getSession();
-  if (!session) throw new Error('Unauthorized');
+  const session = await requirePermissionForAction('people');
 
   await prisma.employee.delete({
     where: { 
@@ -156,8 +155,7 @@ export async function markAttendance(data: {
   status: 'PRESENT' | 'ABSENT' | 'HALF_DAY' | 'LEAVE';
   notes?: string;
 }) {
-  const session = await getSession();
-  if (!session) throw new Error('Unauthorized');
+  const session = await requirePermissionForAction('people');
 
   // Verify employee belongs to org
   const employee = await prisma.employee.findUnique({
@@ -197,8 +195,7 @@ export async function generateSalarySlip(data: {
   deductions?: number;
   bonuses?: number;
 }) {
-  const session = await getSession();
-  if (!session) throw new Error('Unauthorized');
+  const session = await requirePermissionForAction('people');
 
   const employee = await prisma.employee.findUnique({
     where: { id: data.employeeId, organizationId: session.organizationId },
@@ -239,10 +236,9 @@ export async function generateSalarySlip(data: {
 }
 
 export async function getSalarySlips(employeeId?: number) {
-  const session = await getSession();
-  if (!session) throw new Error('Unauthorized');
+  const session = await requirePermissionForAction('people');
 
-  const where: any = { organizationId: session.organizationId }; // Assuming SalarySlip has organizationId, need to check schema. If not, filter by employee's org.
+  const where: any = { employee: { organizationId: session.organizationId } }; 
   if (employeeId) where.employeeId = employeeId;
 
   return prisma.salarySlip.findMany({
@@ -254,10 +250,34 @@ export async function getSalarySlips(employeeId?: number) {
   });
 }
 
+export async function markSalaryPaid(slipId: number) {
+  const session = await requirePermissionForAction('people');
+
+  // Verify slip belongs to an employee in this org
+  const slip = await prisma.salarySlip.findUnique({
+    where: { id: slipId },
+    include: { employee: true }
+  });
+
+  if (!slip || slip.employee.organizationId !== session.organizationId) {
+    throw new Error('Salary slip not found or unauthorized');
+  }
+
+  const updated = await prisma.salarySlip.update({
+    where: { id: slipId },
+    data: {
+      status: 'PAID',
+      paidDate: new Date(),
+    }
+  });
+
+  revalidatePath('/employees');
+  return updated;
+}
+
 // Leave Management
 export async function getLeaves(employeeId?: number) {
-  const session = await getSession();
-  if (!session) throw new Error('Unauthorized');
+  const session = await requirePermissionForAction('people');
   
   const where: any = {
     status: 'LEAVE',

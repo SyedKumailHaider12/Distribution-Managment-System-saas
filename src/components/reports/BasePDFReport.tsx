@@ -1,0 +1,193 @@
+import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
+import { ReactNode } from 'react';
+
+const styles = StyleSheet.create({
+  page: {
+    paddingTop: 30,
+    paddingBottom: 110, // Prevent content overlap with absolute footer
+    paddingHorizontal: 30,
+    fontSize: 10,
+    fontFamily: 'Helvetica',
+    backgroundColor: '#ffffff',
+  },
+  headerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    borderBottomWidth: 3,
+    borderBottomColor: '#0d9488', // Premium Teal accent line
+    paddingBottom: 12,
+    marginBottom: 15,
+  },
+  headerLeft: {
+    flexDirection: 'column',
+    width: '65%',
+  },
+  headerRight: {
+    flexDirection: 'column',
+    alignItems: 'flex-end',
+    width: '35%',
+    justifyContent: 'flex-end',
+  },
+  logo: {
+    width: 55,
+    height: 55,
+    marginBottom: 6,
+  },
+  orgName: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    color: '#0f172a',
+    letterSpacing: 0.5,
+  },
+  orgContact: {
+    fontSize: 8.5,
+    color: '#475569',
+    marginTop: 2,
+  },
+  reportTitle: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#0d9488', // Teal color for title
+    textTransform: 'uppercase',
+    letterSpacing: 1,
+    textAlign: 'right',
+    marginBottom: 4,
+  },
+  reportSubtitle: {
+    fontSize: 8.5,
+    color: '#64748b',
+    textAlign: 'right',
+  },
+  footer: {
+    position: 'absolute',
+    bottom: 25,
+    left: 30,
+    right: 30,
+    borderTopWidth: 1,
+    borderTopColor: '#cbd5e1',
+    paddingTop: 10,
+  },
+  signatureSection: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  signatureBox: {
+    width: '28%',
+    paddingTop: 20,
+    borderTopWidth: 1,
+    borderTopColor: '#94a3b8',
+    textAlign: 'center',
+  },
+  signatureLabel: {
+    fontSize: 7.5,
+    color: '#475569',
+  },
+  stampArea: {
+    textAlign: 'center',
+    marginBottom: 4,
+  },
+  stampText: {
+    fontSize: 7.5,
+    color: '#94a3b8',
+    fontStyle: 'italic',
+  },
+  footerBottom: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginTop: 5,
+  },
+  poweredBy: {
+    fontSize: 7.5,
+    color: '#94a3b8',
+  },
+  pageNumber: {
+    fontSize: 7.5,
+    color: '#94a3b8',
+  },
+});
+
+interface BasePDFReportProps {
+  organization: {
+    name: string;
+    phone?: string;
+    email?: string;
+    address?: string;
+    city?: string;
+    logoUrl?: string;
+  };
+  reportTitle: string;
+  reportSubtitle?: string;
+  children: ReactNode;
+}
+
+export default function BasePDFReport({ organization, reportTitle, reportSubtitle, children }: BasePDFReportProps) {
+  return (
+    <Document>
+      <Page size="A4" style={styles.page}>
+        {/* Top Decorative accent bar */}
+        <View style={{ height: 4, backgroundColor: '#0d9488', marginBottom: 10 }} />
+
+        {/* 2-Column Header */}
+        <View style={styles.headerContainer}>
+          <View style={styles.headerLeft}>
+            {organization.logoUrl && (
+              <Image src={organization.logoUrl} style={styles.logo} />
+            )}
+            <Text style={styles.orgName}>{organization.name || 'AzanTech Solutions'}</Text>
+            {organization.address && (
+              <Text style={styles.orgContact}>
+                {organization.address}{organization.city ? `, ${organization.city}` : ''}
+              </Text>
+            )}
+            {(organization.phone || organization.email) && (
+              <Text style={styles.orgContact}>
+                {organization.phone ? `Phone: ${organization.phone}` : ''}
+                {organization.phone && organization.email ? '  |  ' : ''}
+                {organization.email ? `Email: ${organization.email}` : ''}
+              </Text>
+            )}
+          </View>
+          <View style={styles.headerRight}>
+            <Text style={styles.reportTitle}>{reportTitle}</Text>
+            {reportSubtitle && (
+              <Text style={styles.reportSubtitle}>{reportSubtitle}</Text>
+            )}
+          </View>
+        </View>
+
+        {/* Report Content */}
+        <View style={{ flex: 1 }}>
+          {children}
+        </View>
+
+        {/* Footer (Prints on every page) */}
+        <View style={styles.footer} fixed>
+          <View style={styles.signatureSection}>
+            <View style={styles.signatureBox}>
+              <Text style={styles.signatureLabel}>Prepared By</Text>
+            </View>
+            <View style={styles.signatureBox}>
+              <Text style={styles.signatureLabel}>Checked By</Text>
+            </View>
+            <View style={styles.signatureBox}>
+              <Text style={styles.signatureLabel}>Approved By</Text>
+            </View>
+          </View>
+          <View style={styles.stampArea}>
+            <Text style={styles.stampText}>[ Company Stamp / Signature ]</Text>
+          </View>
+          <View style={styles.footerBottom}>
+            <Text style={styles.poweredBy}>
+              Generated by AzanTech DMS • {new Date().toLocaleDateString()}
+            </Text>
+            <Text style={styles.pageNumber} render={({ pageNumber, totalPages }) => (
+              `Page ${pageNumber} of ${totalPages}`
+            )} />
+          </View>
+        </View>
+      </Page>
+    </Document>
+  );
+}

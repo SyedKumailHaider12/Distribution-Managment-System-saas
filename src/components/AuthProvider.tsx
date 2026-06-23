@@ -7,6 +7,9 @@ interface SessionUser {
   username: string;
   role: string;
   fullName: string | null;
+  subscriptionStatus?: string;
+  trialEndsAt?: string | null;
+  subscriptionEndsAt?: string | null;
 }
 
 interface AuthContextType {
@@ -24,7 +27,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refresh = async () => {
     try {
-      const res = await fetch('/api/auth/session');
+      const res = await fetch('/api/auth/session', { cache: 'no-store' });
       if (res.ok) {
         const data = await res.json();
         setUser(data.user);

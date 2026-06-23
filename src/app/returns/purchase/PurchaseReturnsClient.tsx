@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { RotateCcw, Plus, Search, Package, CheckCircle2 } from 'lucide-react';
 import { createPurchaseReturn } from './actions';
 import { motion } from 'framer-motion';
+import Link from 'next/link';
 import { useCurrency } from '@/contexts/CurrencyContext';
 
 export function PurchaseReturnsClient({ invoices, returns }: any) {
@@ -223,13 +224,26 @@ export function PurchaseReturnsClient({ invoices, returns }: any) {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <h1 className="text-3xl font-bold text-slate-800 dark:text-white flex items-center gap-3">
-          <RotateCcw className="w-8 h-8 text-purple-600" /> Purchase Returns
-        </h1>
-        <button onClick={() => setViewMode('form')} className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-xl flex items-center gap-2">
-          <Plus className="w-4 h-4" /> New Return
-        </button>
+      <div className="flex flex-col lg:flex-row lg:justify-between lg:items-center gap-4 mb-2">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold text-slate-800 dark:text-white flex items-center gap-3">
+            <RotateCcw className="w-8 h-8 text-purple-600" /> Returns Management
+          </h1>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">Process company returns and view history</p>
+        </div>
+        <div className="flex flex-col sm:flex-row items-center gap-4">
+          <div className="flex bg-slate-100 dark:bg-slate-800 p-1 rounded-xl shadow-inner border border-slate-200 dark:border-slate-700">
+            <Link href="/returns/sales" className="px-6 py-2.5 text-sm font-medium rounded-lg transition-all text-slate-600 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-slate-700/50">
+              Sales Returns
+            </Link>
+            <Link href="/returns/purchase" className="px-6 py-2.5 text-sm font-bold rounded-lg transition-all shadow-sm bg-white dark:bg-slate-700 text-purple-600 dark:text-purple-400">
+              Purchase Returns
+            </Link>
+          </div>
+          <button onClick={() => setViewMode('form')} className="px-6 py-2.5 bg-purple-600 hover:bg-purple-700 text-white font-bold rounded-lg flex items-center gap-2">
+            <Plus className="w-4 h-4" /> New Return
+          </button>
+        </div>
       </div>
 
       <div className="bg-white dark:bg-slate-800 rounded-xl shadow-sm border border-slate-200 dark:border-slate-700 p-4">

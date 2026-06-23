@@ -9,6 +9,11 @@
   --color-primary-indigo: #6366F1;
   --color-primary-blue:   #3B82F6;
 
+  /* Animated Background */
+  --bg-anim-1: #0F172A;
+  --bg-anim-2: #1E3A8A;
+  --bg-anim-3: #0B1120;
+
   /* Background layers */
   --bg-dark-1: #0B1120;
   --bg-dark-2: #111827;
@@ -50,7 +55,7 @@ html, body {
   position: fixed;
   inset: 0;
   z-index: -1;
-  background: linear-gradient(135deg, var(--color-primary-purple), var(--color-primary-indigo), var(--color-primary-blue));
+  background: linear-gradient(135deg, var(--bg-anim-1), var(--bg-anim-2), var(--bg-anim-3));
   background-size: 300% 300%;
   animation: gradientMove 15s ease infinite;
 }
@@ -118,6 +123,8 @@ html, body {
 /* Utility classes */
 .scrollbar-none::-webkit-scrollbar { display: none; }
 .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
 /* Ensure Tailwind can purge the new classes */
 @layer utilities {

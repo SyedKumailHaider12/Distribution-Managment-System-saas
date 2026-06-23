@@ -24,7 +24,7 @@ export default async function RootLayout({
   children: React.ReactNode
 }) {
   // Fetch settings from database
-  const theme = await getSettingValue('theme') || 'light'
+  const theme = await getSettingValue('theme') || 'dark'
   const currency = await getSettingValue('currency') || 'PKR'
 
   return (
