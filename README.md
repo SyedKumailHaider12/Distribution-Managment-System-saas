@@ -46,3 +46,4 @@ A multi-tenant SaaS platform built to handle enterprise distribution, inventory 
 1. Run `npm install`
 2. Run `npx prisma db push` to synchronize the database schema.
 3. Run `npm run dev` to start the development server.
+"# Distribution-Managment-System-saas" 
