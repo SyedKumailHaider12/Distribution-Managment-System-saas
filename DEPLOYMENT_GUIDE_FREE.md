@@ -1,7 +1,16 @@
-# Free Deployment Guide (Fully Free) — Distribution Management System (Next.js + Prisma + SQLite)
+# Free Deployment Guide (Fully Free) — Distribution Management System (Next.js + Prisma + PostgreSQL on Neon)
 
-This project is a **Next.js App Router** app using **Prisma** and **SQLite**.
-To deploy it *fully free*, we target **Railway Free** (PostgreSQL not used; we use SQLite file in a persistent volume) or **Render Free** (if SQLite/file persistence is acceptable). The most reliable free option is typically **Railway**.
+This project is a **Next.js App Router** app using **Prisma**.
+
+✅ New goal in this guide: publish **PostgreSQL** (instead of SQLite) and host the **frontend on Cloudflare**.
+
+**Recommended stack (fully free friendly):**
+- **PostgreSQL:** Neon (free tier)
+- **Next.js server:** Railway (free tier)
+- **Frontend / CDN:** Cloudflare (free)
+
+> Important: your current `prisma/schema.prisma` is set to `sqlite`. To use PostgreSQL you must switch Prisma provider + run migrations.
+
 
 > Notes / limitations
 - **SQLite + stateless hosting** requires **persistent storage** for the database file (`prisma/dev.db` or a production sqlite file). Without persistence, data will be lost on redeploy.
