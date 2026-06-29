@@ -30,7 +30,10 @@ export default function StockReportClient({ stocks, settings, organization }: Pr
   const expiryAlertDate = useMemo(() => { const d = new Date(); d.setDate(d.getDate() + expiryDays); return d; }, [expiryDays]);
 
   const warehouses = useMemo(() => [...new Map(stocks.map(s => [s.warehouse.id, s.warehouse.name])).entries()].map(([id, name]) => ({ id, name })), [stocks]);
-  const categories = useMemo(() => [...new Map(stocks.map(s => [s.product.category?.name || '', s.product.category?.name || 'Uncategorized']).filter(([k]) => k)).entries()].map(([k, v]) => ({ key: k, label: v })), [stocks]);
+  const categories = useMemo(() => {
+    const validPairs = stocks.map(s => [s.product.category?.name || '', s.product.category?.name || 'Uncategorized'] as [string, string]).filter(([k]) => k);
+    return Array.from(new Map(validPairs).entries()).map(([k, v]) => ({ key: k, label: v }));
+  }, [stocks]);
 
   const filtered = useMemo(() => stocks.filter(s => {
     if (warehouseFilter && s.warehouse.id.toString() !== warehouseFilter) return false;

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Users, Plus, Search, Edit, Trash2, Shield, User as UserIcon, Phone, Briefcase, CheckCircle2, AlertCircle, Save, RotateCcw, Calendar, DollarSign, Clock, FileText, Check } from 'lucide-react';
+import { Users, Plus, Search, Edit, Trash2, Shield, User as UserIcon, Phone, Briefcase, CheckCircle2, AlertCircle, Save, RotateCcw, Calendar, DollarSign, Clock, FileText, Check, X } from 'lucide-react';
 import { createEmployee, updateEmployee, deleteEmployee, markAttendance, generateSalarySlip, markSalaryPaid } from './actions';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useCurrency } from '@/contexts/CurrencyContext';

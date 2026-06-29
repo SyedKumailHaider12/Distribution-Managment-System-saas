@@ -6,7 +6,7 @@ import { Search, Filter, AlertTriangle, Package, Warehouse, RotateCcw, ArrowRigh
 interface Stock {
   id: number;
   quantity: number;
-  product: { id: number; name: string; reorderLevel: number; category?: { name: string } };
+  product: { id: number; name: string; reorderLevel: number; category?: { name: string } | null };
   batch: { id: number; batchNumber: string; expiryDate: Date | null };
   warehouse: { id: number; name: string };
 }

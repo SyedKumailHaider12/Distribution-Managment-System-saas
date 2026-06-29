@@ -29,7 +29,7 @@ export interface ExpiringItem {
 }
 
 // Simulate network latency
-const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+export const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
 
 export const fetchKPIs = async (): Promise<KPIs> => {
   await delay(200);

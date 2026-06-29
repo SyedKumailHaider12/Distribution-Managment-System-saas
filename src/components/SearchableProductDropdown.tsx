@@ -6,7 +6,8 @@ import { Search, ChevronDown } from 'lucide-react';
 interface Product {
   id: number;
   name: string;
-  category?: { name: string };
+  category?: { name: string } | null;
+  brand?: { name: string } | null;
   totalStock?: number;
 }
 

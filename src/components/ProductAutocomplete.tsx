@@ -9,8 +9,9 @@ interface Product {
   barcode: string | null;
   salePriceRetail: number;
   salePriceDistribution: number;
-  brand?: { name: string };
-  category?: { name: string };
+  brand?: { name: string } | null;
+  category?: { name: string } | null;
+  reorderLevel: number;
   totalStock: number;
   batches: Batch[];
 }

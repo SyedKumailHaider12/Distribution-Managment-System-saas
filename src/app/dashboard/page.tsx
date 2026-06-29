@@ -58,7 +58,7 @@ export default function DashboardPage() {
           expiring: kpiData.expiring,
           organizationName: kpiData.organizationName,
           subscriptionStatus: kpiData.subscriptionStatus,
-          trialEndsAt: kpiData.trialEndsAt,
+          trialEndsAt: kpiData.trialEndsAt ?? null,
         }));
       } catch (e: any) {
         if (e.message?.includes('Unauthorized')) {

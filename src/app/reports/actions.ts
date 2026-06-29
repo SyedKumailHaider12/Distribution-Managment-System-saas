@@ -34,7 +34,7 @@ export async function getSalesReportData(filters?: {
       orderBy: { invoiceDate: 'desc' },
     }),
     prisma.customerReturn.findMany({
-      where: { organizationId: org, invoice: { isNot: null } },
+      where: { organizationId: org },
       include: { invoice: { select: { invoiceNumber: true, invoiceDate: true } }, items: { include: { product: { select: { name: true } } } } },
       orderBy: { returnDate: 'desc' },
     }),
@@ -68,7 +68,7 @@ export async function getPurchasesReportData(filters?: {
       orderBy: { invoiceDate: 'desc' },
     }),
     prisma.purchaseReturn.findMany({
-      where: { organizationId: org, invoice: { isNot: null } },
+      where: { organizationId: org },
       include: { invoice: { select: { invoiceNumber: true } }, items: { include: { product: { select: { name: true } } } } },
     }),
     prisma.supplier.findMany({ where: { organizationId: org }, select: { id: true, name: true }, orderBy: { name: 'asc' } }),
@@ -106,6 +106,8 @@ export async function getProfitLossData(filters?: { startDate?: string; endDate?
       where: { organizationId: org },
       include: { items: true },
     }),
+  ]);
+
   const totalSales = salesInvoices.reduce((s, i) => s + i.netAmount, 0);
   const totalCOGS = salesInvoices.reduce((s, inv) =>
     s + inv.items.reduce((is, item) => is + (item.purchasePrice * item.quantity), 0), 0);

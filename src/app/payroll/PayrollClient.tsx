@@ -62,6 +62,7 @@ export function PayrollClient({
       await generateSalarySlip({
         employeeId: selectedEmployee,
         month: selectedMonth,
+        baseSalary: initialEmployees.find((e: any) => e.id === selectedEmployee)?.baseSalary || 0,
         deductions,
         bonuses,
       });

@@ -23,9 +23,7 @@ interface Invoice {
     name: string;
     isWalkIn: boolean;
   };
-  salesman?: {
-    name: string;
-  };
+  salesman?: { name: string } | null;
 }
 
 interface Salesman { id: number; name: string; employee: { name: string } }
@@ -33,8 +31,9 @@ interface Customer { id: number; name: string; type: string; isWalkIn: boolean }
 interface Warehouse { id: number; name: string }
 interface Product { 
   id: number; 
-  name: string; 
-  category: { name: string };
+  name: string;
+  brand?: { name: string } | null;
+  category?: { name: string } | null;
   salePriceRetail: number;
   salePriceDistribution: number;
   totalStock?: number;
@@ -243,7 +242,7 @@ export function SalesClient({
     
     if (res.success) {
       alert('Payment recorded successfully');
-      setInvoices(invoices.map(inv => inv.id === paymentModal.invoiceId ? { ...inv, paidAmount: res.result.newPaidAmount, status: res.result.newStatus } : inv));
+      setInvoices(invoices.map(inv => inv.id === paymentModal.invoiceId ? { ...inv, paidAmount: res.result?.newPaidAmount || inv.paidAmount, status: res.result?.newStatus || inv.status } : inv));
       setPaymentModal(p => ({ ...p, isOpen: false, isSubmitting: false, amount: '' }));
     } else {
       alert(res.error || 'Failed to record payment');
@@ -279,7 +278,7 @@ export function SalesClient({
       
       const result = await createSalesInvoice({
         customerId: parseInt(saleData.customerId),
-        salesmanId: saleData.salesmanId ? parseInt(saleData.salesmanId) : undefined,
+        salesmanId: saleData.salesmanId ? parseInt(saleData.salesmanId) : 0,
         warehouseId: parseInt(saleData.warehouseId),
         branchId: 1, 
         saleType: saleData.saleType,

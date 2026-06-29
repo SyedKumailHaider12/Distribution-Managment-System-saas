@@ -14,7 +14,7 @@ type Customer = {
   address: string | null
   type: string
   creditLimit: number
-  area?: Area
+  area?: Area | null
   createdAt: Date
   pendingPayments?: number
   pendingInvoicesCount?: number

@@ -22,7 +22,7 @@ export default function LandingPage() {
            
            <div className="relative z-10 h-full flex items-center justify-center p-12">
              <div className="w-full h-full max-w-2xl">
-               <BrandingSection hideBrandingName />
+               <BrandingSection />
              </div>
            </div>
         </div>
@@ -32,7 +32,7 @@ export default function LandingPage() {
           {/* Landing page Hero content for Mobile, CTA for Desktop */}
           <div className="w-full max-w-[480px] lg:max-w-none text-center lg:text-left">
             <div className="lg:hidden mb-12">
-               <BrandingSection hideBrandingName />
+               <BrandingSection />
             </div>
             
             <motion.div

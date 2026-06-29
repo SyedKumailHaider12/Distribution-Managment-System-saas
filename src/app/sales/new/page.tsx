@@ -20,8 +20,8 @@ interface Product {
   salePriceRetail: number;
   salePriceDistribution: number;
   reorderLevel: number;
-  brand?: { name: string };
-  category?: { name: string };
+  brand?: { name: string } | null;
+  category?: { name: string } | null;
   totalStock: number;
   batches: Batch[];
 }

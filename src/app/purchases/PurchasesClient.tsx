@@ -48,7 +48,7 @@ type Supplier = { id: number; name: string; phone: string | null; address: strin
 type Warehouse = { id: number; name: string }
 type Branch = { id: number; name: string; organization: { id: number; name: string } }
 type Category = { id: number; name: string }
-type Product = { id: number; name: string; genericName?: string | null; categoryId: number | null; category: { name: string }; brand: { name: string } }
+type Product = { id: number; name: string; genericName?: string | null; categoryId: number | null; category?: { name: string } | null; brand?: { name: string } | null }
 
 interface PurchasesClientProps {
   initialInvoices: Invoice[];
