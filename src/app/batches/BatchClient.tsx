@@ -37,8 +37,8 @@ export function BatchClient({ initialBatches }: { initialBatches: Batch[] }) {
     const isExpiringSoon = expiryDate && !isExpired && (expiryDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24) <= 30;
 
     let matchesFilter = true;
-    if (filter === 'expired') matchesFilter = isExpired;
-    else if (filter === 'expiring') matchesFilter = isExpiringSoon;
+    if (filter === 'expired') matchesFilter = !!isExpired;
+    else if (filter === 'expiring') matchesFilter = !!isExpiringSoon;
     else if (filter === 'valid') matchesFilter = !isExpired && !isExpiringSoon;
 
     return matchesSearch && matchesFilter;
