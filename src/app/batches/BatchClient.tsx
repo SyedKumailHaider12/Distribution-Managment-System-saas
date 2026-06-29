@@ -11,8 +11,8 @@ interface Batch {
   product: {
     id: number;
     name: string;
-    brand?: { name: string };
-    category?: { name: string };
+    brand?: { name: string } | null;
+    category?: { name: string } | null;
   };
   stocks: {
     id: number;
