@@ -15,7 +15,23 @@ export async function registerOrganization(data: {
   city?: string;
 }) {
   const { orgName, adminName, username, password, phone, email, address, city } = data;
-  console.log('Registering Organization:', orgName);
+  
+  if (!orgName || !adminName || !username || !password || !phone || !email || !address || !city) {
+    throw new Error('All fields are required.');
+  }
+
+  // Check uniqueness globally
+  const existingOrg = await prisma.organization.findUnique({ where: { name: orgName } });
+  if (existingOrg) throw new Error(`Organization name "${orgName}" is already taken.`);
+
+  const existingOrgSlug = await prisma.organization.findUnique({ where: { slug: slugify(orgName) } });
+  if (existingOrgSlug) throw new Error(`An organization with a similar name already exists.`);
+
+  const existingUsername = await prisma.user.findUnique({ where: { username } });
+  if (existingUsername) throw new Error(`Username "${username}" is already taken.`);
+
+  const existingEmail = await prisma.user.findUnique({ where: { email } });
+  if (existingEmail) throw new Error(`Email "${email}" is already registered.`);
 
   try {
     // 1. Create Organization & Default Settings
@@ -46,6 +62,7 @@ export async function registerOrganization(data: {
       data: {
         organizationId: organization.id,
         username,
+        email,
         passwordHash,
         role: 'admin',
         fullName: adminName,

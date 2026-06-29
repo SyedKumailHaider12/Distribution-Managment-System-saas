@@ -263,7 +263,7 @@ export async function createSalesInvoice(data: {
         action: 'CREATE',
         tableName: 'SalesInvoice',
         recordId: invoice.id,
-        details: `Created ${saleType} invoice ${invoiceNumber}`,
+        details: `Created ${saleType} invoice ${invoiceNumber} for total ${netAmount}`,
       },
     });
 
@@ -273,7 +273,6 @@ export async function createSalesInvoice(data: {
   revalidatePath('/sales');
   return { success: true, invoice: result };
 }
-
 export async function getCustomersForSale() {
   const session = await getSession();
   if (!session) throw new Error('Unauthorized');

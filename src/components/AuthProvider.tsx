@@ -10,6 +10,8 @@ interface SessionUser {
   subscriptionStatus?: string;
   trialEndsAt?: string | null;
   subscriptionEndsAt?: string | null;
+  twoFactorEnabled?: boolean;
+  organizationId?: number;
 }
 
 interface AuthContextType {

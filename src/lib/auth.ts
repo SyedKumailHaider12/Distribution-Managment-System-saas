@@ -11,6 +11,7 @@ export interface SessionUser {
   fullName: string | null;
   organizationId: number;
   permissions?: string[];
+  twoFactorEnabled?: boolean;
 }
 
 export async function hashPassword(password: string): Promise<string> {
@@ -23,12 +24,7 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
 
 export async function login(username: string, password: string, organizationId: number): Promise<SessionUser | null> {
   const user = await prisma.user.findUnique({
-    where: { 
-      organizationId_username: {
-        organizationId,
-        username
-      }
-    },
+    where: { username },
   });
 
   if (!user || !user.isActive) {
@@ -68,6 +64,7 @@ export async function login(username: string, password: string, organizationId: 
     fullName: user.fullName,
     organizationId: user.organizationId,
     permissions,
+    twoFactorEnabled: user.twoFactorEnabled,
   };
 }
 

@@ -21,6 +21,9 @@ export default function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  
+  const [requires2FA, setRequires2FA] = useState(false);
+  const [totpCode, setTotpCode] = useState('');
 
   useEffect(() => {
     fetch('/api/organizations')
@@ -41,13 +44,19 @@ export default function LoginPage() {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password, organizationId }),
+        body: JSON.stringify({ username, password, organizationId, totpCode }),
       });
 
       const data = await res.json();
 
       if (!res.ok) {
         setError(data.error || 'Login failed');
+        return;
+      }
+
+      if (data.requires2FA) {
+        setRequires2FA(true);
+        setLoading(false);
         return;
       }
 
@@ -109,80 +118,101 @@ export default function LoginPage() {
                 </motion.div>
               )}
 
-              {/* Organization Field */}
-              <div className="space-y-2 group">
-                <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">Organization</label>
-                <div className="relative">
-                  <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-indigo-500 transition-colors" />
-                  <select
-                    value={organizationId}
-                    onChange={(e) => setOrganizationId(e.target.value)}
-                    className="w-full h-[44px] pl-12 pr-10 bg-[#0B1220] border border-white/5 rounded-[12px] text-white focus:outline-none focus:ring-1 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer text-sm font-medium shadow-inner"
-                    required
-                  >
-                    <option value="">Select Organization</option>
-                    {organizations.map(org => (
-                      <option key={org.id} value={org.id}>{org.name}</option>
-                    ))}
-                  </select>
-                  <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
-                    <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" /></svg>
+              {!requires2FA ? (
+                <>
+                  {/* Organization Field */}
+                  <div className="space-y-2 group">
+                    <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">Organization</label>
+                    <div className="relative">
+                      <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-indigo-500 transition-colors" />
+                      <select
+                        value={organizationId}
+                        onChange={(e) => setOrganizationId(e.target.value)}
+                        className="w-full h-[44px] pl-12 pr-10 bg-[#0B1220] border border-white/5 rounded-[12px] text-white focus:outline-none focus:ring-1 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer text-sm font-medium shadow-inner"
+                        required
+                      >
+                        <option value="">Select Organization</option>
+                        {organizations.map(org => (
+                          <option key={org.id} value={org.id}>{org.name}</option>
+                        ))}
+                      </select>
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
+                        <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" /></svg>
+                      </div>
+                    </div>
                   </div>
-                </div>
-              </div>
 
-              {/* Username Field */}
-              <div className="space-y-2 group">
-                <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">Username</label>
-                <div className="relative">
-                  <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-indigo-500 transition-colors" />
-                  <input
-                    type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    className="w-full h-[44px] pl-12 pr-4 bg-[#0B1220] border border-white/5 rounded-[12px] text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all text-sm font-medium shadow-inner"
-                    placeholder="e.g. kumail_rizvi"
-                    required
-                  />
-                </div>
-              </div>
+                  {/* Username Field */}
+                  <div className="space-y-2 group">
+                    <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">Username</label>
+                    <div className="relative">
+                      <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-indigo-500 transition-colors" />
+                      <input
+                        type="text"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value)}
+                        className="w-full h-[44px] pl-12 pr-4 bg-[#0B1220] border border-white/5 rounded-[12px] text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all text-sm font-medium shadow-inner"
+                        placeholder="e.g. kumail_rizvi"
+                        required
+                      />
+                    </div>
+                  </div>
 
-              {/* Password Field */}
-              <div className="space-y-2 group">
-                <div className="flex items-center justify-between ml-1">
-                  <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em]">Password</label>
-                  <a href="#" className="text-[11px] font-black text-indigo-400 hover:text-indigo-300 transition-colors uppercase tracking-wider">Forgot?</a>
-                </div>
-                <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-indigo-500 transition-colors" />
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="w-full h-[44px] pl-12 pr-12 bg-[#0B1220] border border-white/5 rounded-[12px] text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all text-sm font-medium shadow-inner"
-                    placeholder="••••••••"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-indigo-400 transition-colors p-1"
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
+                  {/* Password Field */}
+                  <div className="space-y-2 group">
+                    <div className="flex items-center justify-between ml-1">
+                      <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em]">Password</label>
+                      <a href="#" className="text-[11px] font-black text-indigo-400 hover:text-indigo-300 transition-colors uppercase tracking-wider">Forgot?</a>
+                    </div>
+                    <div className="relative">
+                      <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-indigo-500 transition-colors" />
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="w-full h-[44px] pl-12 pr-12 bg-[#0B1220] border border-white/5 rounded-[12px] text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all text-sm font-medium shadow-inner"
+                        placeholder="••••••••"
+                        required
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-indigo-400 transition-colors p-1"
+                      >
+                        {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
 
-              <div className="flex items-center gap-3 px-1">
-                <input 
-                  type="checkbox" 
-                  id="remember" 
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                  className="w-4 h-4 rounded-md border-white/10 bg-[#0B1220] text-indigo-500 focus:ring-indigo-500/50" 
-                />
-                <label htmlFor="remember" className="text-sm text-slate-400 cursor-pointer select-none font-medium">Keep me signed in</label>
-              </div>
+                  <div className="flex items-center gap-3 px-1">
+                    <input 
+                      type="checkbox" 
+                      id="remember" 
+                      checked={rememberMe}
+                      onChange={(e) => setRememberMe(e.target.checked)}
+                      className="w-4 h-4 rounded-md border-white/10 bg-[#0B1220] text-indigo-500 focus:ring-indigo-500/50" 
+                    />
+                    <label htmlFor="remember" className="text-sm text-slate-400 cursor-pointer select-none font-medium">Keep me signed in</label>
+                  </div>
+                </>
+              ) : (
+                <div className="space-y-2 group">
+                  <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">Authenticator Code</label>
+                  <div className="relative">
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-indigo-500 transition-colors" />
+                    <input
+                      type="text"
+                      value={totpCode}
+                      onChange={(e) => setTotpCode(e.target.value)}
+                      className="w-full h-[44px] pl-12 pr-4 bg-[#0B1220] border border-white/5 rounded-[12px] text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all text-sm font-medium shadow-inner text-center tracking-widest text-lg"
+                      placeholder="000000"
+                      maxLength={6}
+                      required
+                    />
+                  </div>
+                  <p className="text-xs text-slate-500 mt-2 text-center">Open your Authenticator app and enter the 6-digit code.</p>
+                </div>
+              )}
 
               <button
                 type="submit"

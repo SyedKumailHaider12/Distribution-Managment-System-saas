@@ -7,6 +7,7 @@ import { Search, Bell, Sun, Moon, User, ChevronDown, X, Package, ShoppingCart, U
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from './ThemeProvider';
 import { useAuth } from './AuthProvider';
+import NotificationBell from './NotificationBell';
 
 const NAV_TABS = [
   { name: 'Dashboard', href: '/dashboard', icon: LayoutDashboard },
@@ -20,7 +21,7 @@ const NAV_TABS = [
   { name: 'Orders', href: '/orders', icon: Package },
   { name: 'Returns', href: '/returns/sales', icon: RotateCcw },
   { name: 'Stock', href: '/stock', icon: Package },
-  { name: 'Reports', href: '/reports/sales', icon: BarChart3 },
+  { name: 'Reports', href: '/reports', icon: BarChart3 },
   { name: 'Employees', href: '/employees', icon: Users },
   { name: 'Settings', href: '/settings', icon: Settings },
 ];
@@ -88,10 +89,7 @@ export const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
             {theme === 'dark' ? <Sun className="w-5 h-5 text-amber-500" /> : <Moon className="w-5 h-5 text-slate-600" />}
           </button>
 
-          <button className="relative p-2.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-500 dark:text-slate-400">
-            <Bell className="w-5 h-5" />
-            <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-red-500 rounded-full border-2 border-white dark:border-slate-900"></span>
-          </button>
+          <NotificationBell />
 
           <div className="relative" ref={profileRef}>
             <button

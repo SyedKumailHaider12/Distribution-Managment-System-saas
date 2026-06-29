@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Package, Warehouse, Tags, Layers,
   ShoppingCart, Receipt, Truck, RotateCcw, CornerDownLeft,
   Users, Building2, UserCheck, Building,
-  Shield, FileText, Settings, X, LogOut, User
+  Shield, FileText, Settings, X, LogOut, User, BarChart3
 } from 'lucide-react';
 import { useAuth } from './AuthProvider';
 
@@ -39,6 +39,7 @@ const MENU_ITEMS = [
     { name: 'Warehouses', icon: Warehouse, path: '/warehouses' },
   ]},
   { section: 'REPORTS', moduleId: 'reports', items: [
+    { name: 'Overview', icon: BarChart3, path: '/reports' },
     { name: 'Sales Report', icon: Receipt, path: '/reports/sales' },
     { name: 'Purchase Report', icon: ShoppingCart, path: '/reports/purchase' },
     { name: 'Stock Report', icon: Package, path: '/reports/stock' },

@@ -10,7 +10,7 @@ datasource db {
 // === MULTI-TENANT ===
 model Organization {
   id            Int      @id @default(autoincrement())
-  name          String
+  name          String   @unique
   slug          String   @unique
   contactPerson String?
   phone         String?
@@ -143,11 +143,14 @@ model SalarySlip {
 model User {
   id             Int     @id @default(autoincrement())
   organizationId Int
-  username       String
+  username       String  @unique
+  email          String  @unique
   passwordHash   String
   role           String  @default("cashier")
   fullName       String?
   isActive       Boolean @default(true)
+  twoFactorSecret String?
+  twoFactorEnabled Boolean @default(false)
 
   organization Organization @relation(fields: [organizationId], references: [id])
   employee     Employee?
@@ -156,8 +159,6 @@ model User {
   processedReturns CustomerReturn[] @relation("ProcessedReturns")
   processedPurchaseReturns PurchaseReturn[] @relation("ProcessedPurchaseReturns")
   draftSales   DraftSale[] @relation("DraftSales")
-
-  @@unique([organizationId, username])
 }
 
 model RolePermission {

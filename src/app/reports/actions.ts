@@ -9,6 +9,76 @@ async function requireSession() {
   return session;
 }
 
+export async function getReportsOverview() {
+  const session = await requireSession();
+  const org = session.organizationId;
+  const now = new Date();
+  const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+
+  const [
+    monthlySales,
+    monthlyPurchases,
+    totalCustomers,
+    totalProducts,
+    lowStockCount,
+    recentActivity,
+  ] = await Promise.all([
+    prisma.salesInvoice.aggregate({
+      where: { organizationId: org, invoiceDate: { gte: startOfMonth } },
+      _sum: { netAmount: true },
+      _count: { id: true },
+    }),
+    prisma.purchaseInvoice.aggregate({
+      where: { organizationId: org, invoiceDate: { gte: startOfMonth } },
+      _sum: { netAmount: true },
+      _count: { id: true },
+    }),
+    prisma.customer.count({ where: { organizationId: org, isWalkIn: false } }),
+    prisma.product.count({ where: { organizationId: org } }),
+    prisma.stock.count({ where: { organizationId: org, quantity: { lte: 10 } } }),
+    prisma.auditLog.findMany({
+      where: { organizationId: org },
+      include: { user: { select: { fullName: true, username: true } } },
+      orderBy: { timestamp: 'desc' },
+      take: 5,
+    }),
+  ]);
+
+  // Monthly sales trend (last 6 months)
+  const monthlyTrend: { month: string; sales: number; purchases: number }[] = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const endD = new Date(d.getFullYear(), d.getMonth() + 1, 0, 23, 59, 59);
+    const [s, p] = await Promise.all([
+      prisma.salesInvoice.aggregate({
+        where: { organizationId: org, invoiceDate: { gte: d, lte: endD } },
+        _sum: { netAmount: true },
+      }),
+      prisma.purchaseInvoice.aggregate({
+        where: { organizationId: org, invoiceDate: { gte: d, lte: endD } },
+        _sum: { netAmount: true },
+      }),
+    ]);
+    monthlyTrend.push({
+      month: d.toLocaleString('default', { month: 'short' }),
+      sales: s._sum.netAmount || 0,
+      purchases: p._sum.netAmount || 0,
+    });
+  }
+
+  return {
+    monthlySales: monthlySales._sum.netAmount || 0,
+    monthlySalesCount: monthlySales._count.id,
+    monthlyPurchases: monthlyPurchases._sum.netAmount || 0,
+    monthlyPurchasesCount: monthlyPurchases._count.id,
+    totalCustomers,
+    totalProducts,
+    lowStockCount,
+    recentActivity,
+    monthlyTrend,
+  };
+}
+
 // ─── SALES ─────────────────────────────────────────────────
 export async function getSalesReportData(filters?: {
   startDate?: string; endDate?: string;

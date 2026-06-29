@@ -84,6 +84,7 @@ export async function createEmployee(data: {
       data: {
         organizationId,
         username,
+        email: `${username}@azantech.com`,
         passwordHash,
         role: role === 'Admin' ? 'admin' : role === 'Manager' ? 'manager' : 'cashier',
         fullName: name,
