@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ShieldCheck, Mail, ArrowRight, Loader2 } from 'lucide-react';
 import { useAuth } from '@/components/AuthProvider';
@@ -13,6 +13,43 @@ export default function VerifyEmailPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
+  
+  const [resendCooldown, setResendCooldown] = useState(60);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendMessage, setResendMessage] = useState('');
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (resendCooldown > 0) {
+      timer = setInterval(() => {
+        setResendCooldown((prev) => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
+
+  const handleResend = async () => {
+    setResendLoading(true);
+    setResendMessage('');
+    setError('');
+
+    try {
+      const res = await fetch('/api/auth/resend-otp', {
+        method: 'POST'
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setResendCooldown(60);
+        setResendMessage('A new code has been sent to your email.');
+      } else {
+        setError(data.error || 'Failed to resend code');
+      }
+    } catch (err) {
+      setError('An unexpected error occurred');
+    } finally {
+      setResendLoading(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,7 +101,7 @@ export default function VerifyEmailPage() {
           </div>
           <h1 className="text-2xl font-bold text-white mb-2">Verify your email</h1>
           <p className="text-slate-400 text-center text-sm">
-            We sent a 6-digit code to your email. Enter it below to access your dashboard.
+            We sent a 6-digit code to <strong className="text-white">{user?.email}</strong>. Enter it below to access your dashboard.
           </p>
         </div>
 
@@ -114,6 +151,25 @@ export default function VerifyEmailPage() {
               )}
             </button>
           </form>
+        )}
+
+        {!success && (
+          <div className="mt-6 pt-6 border-t border-white/5 text-center">
+            {resendMessage && (
+              <p className="text-emerald-400 text-sm mb-3">{resendMessage}</p>
+            )}
+            <p className="text-sm text-slate-400">
+              Didn't receive the code?{' '}
+              <button
+                type="button"
+                onClick={handleResend}
+                disabled={resendCooldown > 0 || resendLoading}
+                className="text-indigo-400 font-semibold hover:text-indigo-300 disabled:opacity-50 disabled:hover:text-indigo-400 transition-colors"
+              >
+                {resendLoading ? 'Sending...' : resendCooldown > 0 ? `Resend in ${resendCooldown}s` : 'Resend Code'}
+              </button>
+            </p>
+          </div>
         )}
       </div>
     </div>

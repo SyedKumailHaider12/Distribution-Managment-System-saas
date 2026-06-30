@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { getSession } from '@/lib/auth';
+import { getSession, createSession } from '@/lib/auth';
 import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
@@ -47,6 +47,10 @@ export async function POST(request: Request) {
         otpExpiry: null
       }
     });
+
+    // Update the session cookie
+    const updatedSession = { ...session, emailVerified: true };
+    await createSession(updatedSession);
 
     return NextResponse.json({ success: true });
 

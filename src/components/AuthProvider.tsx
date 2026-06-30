@@ -13,6 +13,7 @@ interface SessionUser {
   twoFactorEnabled?: boolean;
   emailVerified?: boolean;
   organizationId?: number;
+  email: string;
 }
 
 interface AuthContextType {
