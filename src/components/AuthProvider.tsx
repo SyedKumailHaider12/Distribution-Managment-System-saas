@@ -11,6 +11,7 @@ interface SessionUser {
   trialEndsAt?: string | null;
   subscriptionEndsAt?: string | null;
   twoFactorEnabled?: boolean;
+  emailVerified?: boolean;
   organizationId?: number;
 }
 

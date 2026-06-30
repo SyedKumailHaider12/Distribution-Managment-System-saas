@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { sendEmail } from '@/lib/mailer';
 
 // This endpoint is called by Vercel Cron or an external scheduler
 // Configure in vercel.json: { "crons": [{ "path": "/api/cron/stock-alerts", "schedule": "0 8 * * *" }] }
@@ -100,14 +101,6 @@ async function sendAlertEmail(
   lowStockItems: any[],
   expiringItems: any[]
 ): Promise<boolean> {
-  // Use Resend if available, otherwise log
-  const resendKey = process.env.RESEND_API_KEY;
-  if (!resendKey) {
-    console.log(`[EMAIL SKIPPED] No RESEND_API_KEY set. Would send to ${to}:`);
-    console.log(`  Low stock: ${lowStockItems.length}, Expiring: ${expiringItems.length}`);
-    return false;
-  }
-
   const lowStockHtml = lowStockItems.length > 0
     ? `<h3 style="color: #d97706;">⚠️ Low Stock Items (${lowStockItems.length})</h3>
        <table style="width:100%; border-collapse:collapse; margin-bottom:16px;">
@@ -138,19 +131,14 @@ async function sendAlertEmail(
     </div>
   `;
 
-  const res = await fetch('https://api.resend.com/emails', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Authorization: `Bearer ${resendKey}`,
-    },
-    body: JSON.stringify({
-      from: 'AzanTech DMS <alerts@azantechsolutions.com>',
-      to: [to],
-      subject: `Stock Alert: ${lowStockItems.length} low stock, ${expiringItems.length} expiring — ${orgName}`,
-      html,
-    }),
-  });
-
-  return res.ok;
+  try {
+    await sendEmail(
+      to,
+      `Stock Alert: ${lowStockItems.length} low stock, ${expiringItems.length} expiring — ${orgName}`,
+      html
+    );
+    return true;
+  } catch (error) {
+    return false;
+  }
 }

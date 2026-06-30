@@ -14,14 +14,20 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();
 
   const isPublicPage = pathname === '/login' || pathname === '/signup' || pathname === '/landing' || pathname === '/';
+  const isVerifyPage = pathname === '/verify-email';
   const isBillingPage = pathname === '/billing';
 
   useEffect(() => {
-    if (!loading && !user && !isPublicPage) {
+    if (!loading && !user && !isPublicPage && !isVerifyPage) {
       router.push('/login');
     }
+
+    if (!loading && user && !user.emailVerified && !isVerifyPage && !isPublicPage) {
+      router.push('/verify-email');
+    }
+
     
-    if (!loading && user && !isPublicPage && !isBillingPage) {
+    if (!loading && user && user.emailVerified && !isPublicPage && !isBillingPage && !isVerifyPage) {
       if (user.subscriptionStatus === 'EXPIRED') {
          router.push('/billing');
       } else if (user.subscriptionStatus === 'TRIAL' && user.trialEndsAt) {
@@ -36,7 +42,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
          }
       }
     }
-  }, [user, loading, router, isPublicPage, isBillingPage]);
+  }, [user, loading, router, isPublicPage, isBillingPage, isVerifyPage]);
 
   if (loading) {
     return (
@@ -55,6 +61,14 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
         </main>
         <PublicFooter />
       </div>
+    );
+  }
+
+  if (isVerifyPage) {
+    return (
+      <main className="min-h-screen bg-[#020817]">
+        {children}
+      </main>
     );
   }
 

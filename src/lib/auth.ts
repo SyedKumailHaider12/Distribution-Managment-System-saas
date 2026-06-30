@@ -12,6 +12,7 @@ export interface SessionUser {
   organizationId: number;
   permissions?: string[];
   twoFactorEnabled?: boolean;
+  emailVerified?: boolean;
 }
 
 export async function hashPassword(password: string): Promise<string> {
@@ -65,6 +66,7 @@ export async function login(username: string, password: string, organizationId: 
     organizationId: user.organizationId,
     permissions,
     twoFactorEnabled: user.twoFactorEnabled,
+    emailVerified: user.emailVerified,
   };
 }
 
