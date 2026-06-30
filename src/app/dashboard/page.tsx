@@ -6,8 +6,10 @@ import Link from 'next/link';
 import { useCurrency } from '@/contexts/CurrencyContext';
 import { getDashboardOutstandingData, getDashboardReceivablesData, getDashboardKPIs } from './actions';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useAuth } from '@/components/AuthProvider';
 
 export default function DashboardPage() {
+  const { user } = useAuth();
   const [loading, setLoading] = useState(true);
   const [hasAccess, setHasAccess] = useState(true);
   const [kpis, setKPIs] = useState({
@@ -217,6 +219,12 @@ export default function DashboardPage() {
                 </span>
               </div>
             )}
+            <div className="flex justify-between">
+              <span className="text-slate-500 dark:text-slate-400">Account Email</span>
+              <span className={`font-medium ${user?.emailVerified ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                {user?.emailVerified ? 'Verified ✓' : 'Unverified ⚠'}
+              </span>
+            </div>
             <div className="flex justify-between">
               <span className="text-slate-500 dark:text-slate-400">Currency</span>
               <span className="font-medium text-slate-800 dark:text-white">{currency} ({symbol})</span>

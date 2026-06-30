@@ -1,12 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAuth } from '@/components/AuthProvider';
-import { Shield, ShieldAlert, ShieldCheck, Copy, Check } from 'lucide-react';
+import { Shield, ShieldAlert, ShieldCheck, Copy, Check, Mail, Loader2, AlertTriangle } from 'lucide-react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 
 export default function SecuritySettingsPage() {
   const { user, refresh } = useAuth();
+  const router = useRouter();
   
   const [loading, setLoading] = useState(false);
   const [setupData, setSetupData] = useState<{ secret: string, qrCodeUrl: string } | null>(null);
@@ -14,6 +16,42 @@ export default function SecuritySettingsPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const [copied, setCopied] = useState(false);
+
+  // Email change state
+  const [newEmail, setNewEmail] = useState('');
+  const [emailLoading, setEmailLoading] = useState(false);
+  const [emailError, setEmailError] = useState('');
+  const [emailSuccess, setEmailSuccess] = useState('');
+
+  const handleChangeEmail = async () => {
+    if (!newEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) {
+      setEmailError('Please enter a valid email address');
+      return;
+    }
+    setEmailLoading(true);
+    setEmailError('');
+    setEmailSuccess('');
+
+    try {
+      const res = await fetch('/api/auth/change-email', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: newEmail })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setEmailError(data.error || 'Failed to update email');
+      } else {
+        setEmailSuccess('Verification code sent! Redirecting to verification page...');
+        await refresh();
+        setTimeout(() => router.push('/verify-email'), 2000);
+      }
+    } catch (err) {
+      setEmailError('An unexpected error occurred');
+    } finally {
+      setEmailLoading(false);
+    }
+  };
 
   const startSetup = async () => {
     setLoading(true);
@@ -103,6 +141,75 @@ export default function SecuritySettingsPage() {
         </div>
       )}
 
+      {/* ── Email & Verification ── */}
+      <div className="bg-[#0B1220] border border-white/5 rounded-2xl p-6 md:p-8">
+        <div className="flex items-start gap-4 mb-6">
+          <div className={`p-3 rounded-xl ${user?.emailVerified ? 'bg-emerald-500/10 text-emerald-500' : 'bg-amber-500/10 text-amber-400'}`}>
+            <Mail className="w-6 h-6" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-white mb-1">Account Email</h2>
+            <p className="text-sm text-slate-400 max-w-2xl">
+              This is the email address used for login and security notifications. Changing it will require re-verification.
+            </p>
+          </div>
+        </div>
+
+        {/* Current email status */}
+        <div className={`flex items-center justify-between p-4 rounded-xl border mb-6 ${user?.emailVerified ? 'border-emerald-500/20 bg-emerald-500/5' : 'border-amber-500/20 bg-amber-500/5'}`}>
+          <div className="flex items-center gap-3">
+            {user?.emailVerified
+              ? <ShieldCheck className="w-5 h-5 text-emerald-400" />
+              : <AlertTriangle className="w-5 h-5 text-amber-400" />
+            }
+            <div>
+              <p className="text-white font-semibold text-sm">{user?.email || 'Not set'}</p>
+              <p className={`text-xs mt-0.5 ${user?.emailVerified ? 'text-emerald-400' : 'text-amber-400'}`}>
+                {user?.emailVerified ? 'Verified' : 'Unverified — please check your inbox'}
+              </p>
+            </div>
+          </div>
+          {!user?.emailVerified && (
+            <a href="/verify-email" className="text-sm font-semibold text-amber-400 hover:text-amber-300 transition-colors">
+              Verify Now →
+            </a>
+          )}
+        </div>
+
+        {/* Change email form */}
+        <div className="space-y-4">
+          <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider">Change Email Address</label>
+          <div className="flex gap-3">
+            <input
+              type="email"
+              value={newEmail}
+              onChange={(e) => { setNewEmail(e.target.value); setEmailError(''); setEmailSuccess(''); }}
+              placeholder="Enter new email address"
+              className="flex-1 h-11 bg-[#050816] border border-white/10 rounded-xl px-4 text-white placeholder-slate-600 focus:outline-none focus:border-indigo-500 transition-colors text-sm"
+            />
+            <button
+              onClick={handleChangeEmail}
+              disabled={emailLoading || !newEmail}
+              className="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50 text-white font-bold rounded-xl transition-colors text-sm flex items-center gap-2 whitespace-nowrap"
+            >
+              {emailLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+              {emailLoading ? 'Sending...' : 'Update Email'}
+            </button>
+          </div>
+          {emailError && (
+            <p className="text-red-400 text-sm flex items-center gap-2">
+              <ShieldAlert className="w-4 h-4 flex-shrink-0" /> {emailError}
+            </p>
+          )}
+          {emailSuccess && (
+            <p className="text-emerald-400 text-sm flex items-center gap-2">
+              <ShieldCheck className="w-4 h-4 flex-shrink-0" /> {emailSuccess}
+            </p>
+          )}
+        </div>
+      </div>
+
+      {/* ── Two-Factor Authentication ── */}
       <div className="bg-[#0B1220] border border-white/5 rounded-2xl p-6 md:p-8">
         <div className="flex items-start gap-4 mb-8">
           <div className={`p-3 rounded-xl ${user?.twoFactorEnabled ? 'bg-emerald-500/10 text-emerald-500' : 'bg-slate-800 text-slate-400'}`}>
