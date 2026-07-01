@@ -23,7 +23,8 @@ export default function DashboardPage() {
     totalOrders: 0,
     organizationName: '',
     subscriptionStatus: 'TRIAL',
-    trialEndsAt: null as Date | string | null
+    trialEndsAt: null as Date | string | null,
+    subscriptionEndsAt: null as Date | string | null
   });
   
   const [outstandingData, setOutstandingData] = useState<{totalOutstanding: number, suppliersOutstanding: any[]}>({
@@ -61,6 +62,7 @@ export default function DashboardPage() {
           organizationName: kpiData.organizationName,
           subscriptionStatus: kpiData.subscriptionStatus,
           trialEndsAt: kpiData.trialEndsAt ?? null,
+          subscriptionEndsAt: kpiData.subscriptionEndsAt ?? null,
         }));
       } catch (e: any) {
         if (e.message?.includes('Unauthorized')) {
@@ -216,6 +218,14 @@ export default function DashboardPage() {
                 <span className="text-slate-500 dark:text-slate-400">Trial Days Left</span>
                 <span className="font-medium text-amber-600 dark:text-amber-400">
                   {kpis.trialEndsAt ? Math.max(0, Math.ceil((new Date(kpis.trialEndsAt).getTime() - new Date().getTime()) / (1000 * 3600 * 24))) : 7} Days
+                </span>
+              </div>
+            )}
+            {kpis.subscriptionStatus === 'ACTIVE' && (
+              <div className="flex justify-between">
+                <span className="text-slate-500 dark:text-slate-400">Subscription Days Left</span>
+                <span className="font-medium text-emerald-600 dark:text-emerald-400">
+                  {kpis.subscriptionEndsAt ? Math.max(0, Math.ceil((new Date(kpis.subscriptionEndsAt).getTime() - new Date().getTime()) / (1000 * 3600 * 24))) : 'N/A'} Days
                 </span>
               </div>
             )}

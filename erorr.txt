@@ -1,1 +1,118 @@
-npx tsc --noEmit
+PS D:\Other Projects\Distribution_Managment_System_WebSaas> npm run build  
+ 
+> distribution-management-system@1.0.0 build
+> prisma generate && next build --webpack
+
+Environment variables loaded from .env
+Prisma schema loaded from prisma\schema.prisma
+
+✔ Generated Prisma Client (v5.22.0) to .\node_modules\@prisma\client in 322ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+Tip: Curious about the SQL queries Prisma ORM generates? Optimize helps you enhance your visibility: https://pris.ly/tip-2-optimize
+
+⚠ Attempted to load @next/swc-win32-x64-msvc, but an error occurred: \\?\D:\Other Projects\Distribution_Managment_System_WebSaas\node_modules\@next\swc-win32-x64-msvc\next-swc.win32-x64-msvc.node is not a valid Win32 application.
+\\?\D:\Other Projects\Distribution_Managment_System_WebSaas\node_modules\@next\swc-win32-x64-msvc\next-swc.win32-x64-msvc.node
+  Skipping creating a lockfile at D:\Other Projects\Distribution_Managment_System_WebSaas\.next\lock because we're using WASM bindings
+▲ Next.js 16.2.6 (webpack)
+- Environments: .env
+
+⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
+  Creating an optimized production build ...
+⚠ Attempted to load @next/swc-win32-x64-msvc, but an error occurred: \\?\D:\Other Projects\Distribution_Managment_System_WebSaas\node_modules\@next\swc-win32-x64-msvc\next-swc.win32-x64-msvc.node is not a valid Win32 application.
+\\?\D:\Other Projects\Distribution_Managment_System_WebSaas\node_modules\@next\swc-win32-x64-msvc\next-swc.win32-x64-msvc.node
+⚠ Attempted to load @next/swc-win32-x64-msvc, but an error occurred: \\?\D:\Other Projects\Distribution_Managment_System_WebSaas\node_modules\@next\swc-win32-x64-msvc\next-swc.win32-x64-msvc.node is not a valid Win32 application.
+\\?\D:\Other Projects\Distribution_Managment_System_WebSaas\node_modules\@next\swc-win32-x64-msvc\next-swc.win32-x64-msvc.node
+⚠ Attempted to load @next/swc-win32-x64-msvc, but an error occurred: \\?\D:\Other Projects\Distribution_Managment_System_WebSaas\node_modules\@next\swc-win32-x64-msvc\next-swc.win32-x64-msvc.node is not a valid Win32 application.
+\\?\D:\Other Projects\Distribution_Managment_System_WebSaas\node_modules\@next\swc-win32-x64-msvc\next-swc.win32-x64-msvc.node
+✓ Compiled successfully in 18.1s
+  Running TypeScript  ..⚠ Attempted to load @next/swc-win32-x64-msvc, but an error occurred: \\?\D:\Other Projects\Distribution_Managment_System_WebSaas\node_modules\@next\swc-win32-x64-msvc\next-swc.win32-x64-msvc.node is not a valid Win32 application.
+\\?\D:\Other Projects\Distribution_Managment_System_WebSaas\node_modules\@next\swc-win32-x64-msvc\next-swc.win32-x64-msvc.node
+  Running TypeScript  ..Error: invalid type: unit value, expected usize
+Next.js build worker exited with code: 1 and signal: null
+PS D:\Other Projects\Distribution_Managment_System_WebSaas> npx tsc --noEmit
+.next/types/app/api/superadmin/organizations/[id]/route.ts:248:7 - error TS2344: Type '{ __tag__: "DELETE"; __param_position__: "second"; __param_type__: { params: { id: string; }; }; }' does not satisfy the constraint 'ParamCheck<RouteContext>'.
+  The types of '__param_type__.params' are incompatible between these types.
+    Type '{ id: string; }' is missing the following properties from type 'Promise<any>': then, catch, finally, [Symbol.toStringTag]
+
+248       {
+          ~
+249         __tag__: 'DELETE'
+    ~~~~~~~~~~~~~~~~~~~~~~~~~
+...
+251         __param_type__: SecondArg<MaybeField<TEntry, 'DELETE'>>        
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~        
+252       },
+    ~~~~~~~
+
+.next/types/app/api/superadmin/organizations/[id]/route.ts:287:7 - error TS2344: Type '{ __tag__: "PATCH"; __param_position__: "second"; __param_type__: { params: { id: string; }; }; }' does not satisfy the constraint 'ParamCheck<RouteContext>'.
+  The types of '__param_type__.params' are incompatible between these types.
+    Type '{ id: string; }' is missing the following properties from type 'Promise<any>': then, catch, finally, [Symbol.toStringTag]
+
+287       {
+          ~
+288         __tag__: 'PATCH'
+    ~~~~~~~~~~~~~~~~~~~~~~~~
+...
+290         __param_type__: SecondArg<MaybeField<TEntry, 'PATCH'>>
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+291       },
+    ~~~~~~~
+
+.next/types/app/api/superadmin/users/[id]/route.ts:287:7 - error TS2344: Type '{ __tag__: "PATCH"; __param_position__: "second"; __param_type__: { params: { id: string; }; }; }' does not satisfy the constraint 'ParamCheck<RouteContext>'.
+  The types of '__param_type__.params' are incompatible between these types.
+    Type '{ id: string; }' is missing the following properties from type 'Promise<any>': then, catch, finally, [Symbol.toStringTag]
+
+287       {
+          ~
+288         __tag__: 'PATCH'
+    ~~~~~~~~~~~~~~~~~~~~~~~~
+...
+290         __param_type__: SecondArg<MaybeField<TEntry, 'PATCH'>>
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+291       },
+    ~~~~~~~
+
+.next/types/validator.ts:576:31 - error TS2344: Type 'typeof import("D:/Other Projects/Distribution_Managment_System_WebSaas/src/app/api/superadmin/organizations/[id]/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/superadmin/organizations/[id]">'.
+  Types of property 'PATCH' are incompatible.
+    Type '(request: NextRequest, { params }: { params: { id: string; }; }) => Promise<NextResponse<{ error: string; }> | NextResponse<{ id: number; email: string | null; name: string; slug: string; ... 12 more ...; createdAt: Date; }>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ id: string; }>; }' is not assignable to type '{ params: { id: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'id' is missing in type 'Promise<{ id: string; }>' but required in type '{ id: string; }'.
+
+576   type __Check = __IsExpected<typeof handler>
+                                  ~~~~~~~~~~~~~~
+
+  src/app/api/superadmin/organizations/[id]/route.ts:5:75
+    5 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+                                                                           
+     ~~
+    'id' is declared here.
+
+.next/types/validator.ts:603:31 - error TS2344: Type 'typeof import("D:/Other Projects/Distribution_Managment_System_WebSaas/src/app/api/superadmin/users/[id]/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/superadmin/users/[id]">'.
+  Types of property 'PATCH' are incompatible.
+    Type '(request: NextRequest, { params }: { params: { id: string; }; }) => Promise<NextResponse<{ error: string; }> | NextResponse<{ success: boolean; isBlocked: boolean; }>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; }>; }) => void | Response | Promise<void | Response>'.
+      Types of parameters '__1' and 'context' are incompatible.
+        Type '{ params: Promise<{ id: string; }>; }' is not assignable to type '{ params: { id: string; }; }'.
+          Types of property 'params' are incompatible.
+            Property 'id' is missing in type 'Promise<{ id: string; }>' but required in type '{ id: string; }'.
+
+603   type __Check = __IsExpected<typeof handler>
+                                  ~~~~~~~~~~~~~~
+
+  src/app/api/superadmin/users/[id]/route.ts:5:75
+    5 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
+                                                                           
+     ~~
+    'id' is declared here.
+
+
+Found 5 errors in 3 files.
+
+Errors  Files
+     2  .next/types/app/api/superadmin/organizations/[id]/route.ts:248     
+     1  .next/types/app/api/superadmin/users/[id]/route.ts:287
+     2  .next/types/validator.ts:576
+PS D:\Other Projects\Distribution_Managment_System_WebSaas> 

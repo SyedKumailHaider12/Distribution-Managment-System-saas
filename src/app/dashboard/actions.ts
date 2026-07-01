@@ -12,7 +12,7 @@ export async function getDashboardKPIs() {
   const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
   const [alertDaysStr, organizationData] = await Promise.all([
     prisma.settings.findUnique({ where: { organizationId: org }, select: { alertStockThreshold: true, alertExpiryDays: true } }),
-    prisma.organization.findUnique({ where: { id: org }, select: { name: true, subscriptionStatus: true, trialEndsAt: true } })
+    prisma.organization.findUnique({ where: { id: org }, select: { name: true, subscriptionStatus: true, trialEndsAt: true, subscriptionEndsAt: true } })
   ]);
   const lowStockThreshold = parseInt(alertDaysStr?.alertStockThreshold || '10');
   const expiryDays = parseInt(alertDaysStr?.alertExpiryDays || '30');
@@ -53,6 +53,7 @@ export async function getDashboardKPIs() {
     organizationName: organizationData?.name || 'Unknown',
     subscriptionStatus: organizationData?.subscriptionStatus || 'TRIAL',
     trialEndsAt: organizationData?.trialEndsAt,
+    subscriptionEndsAt: organizationData?.subscriptionEndsAt,
   };
 }
 

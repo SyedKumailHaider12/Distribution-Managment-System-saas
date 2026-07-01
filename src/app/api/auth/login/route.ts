@@ -1,21 +1,50 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { login, createSession } from '@/lib/auth';
-import { logActivity } from '@/lib/audit';
 import { authenticator } from 'otplib';
 import { prisma } from '@/lib/prisma';
 
 export async function POST(request: NextRequest) {
   try {
-    const { username, password, organizationId, totpCode } = await request.json();
+    const { identifier, password, organizationId, totpCode } = await request.json();
 
-    if (!username || !password || !organizationId) {
+    if (!identifier || !password || !organizationId) {
       return NextResponse.json(
-        { error: 'Organization, username, and password are required' },
+        { error: 'Organization, username/email, and password are required' },
         { status: 400 }
       );
     }
 
-    const user = await login(username, password, parseInt(organizationId));
+    // Hard subscription check — block login if trial/subscription expired
+    const org = await prisma.organization.findUnique({
+      where: { id: parseInt(organizationId) },
+      select: { subscriptionStatus: true, trialEndsAt: true, subscriptionEndsAt: true }
+    });
+
+    if (!org) {
+      return NextResponse.json({ error: 'Organization not found' }, { status: 404 });
+    }
+
+    const now = new Date();
+    if (org.subscriptionStatus === 'EXPIRED') {
+      return NextResponse.json(
+        { error: 'Your subscription has expired. Please contact your administrator.' },
+        { status: 403 }
+      );
+    }
+    if (org.subscriptionStatus === 'TRIAL' && org.trialEndsAt && now > org.trialEndsAt) {
+      return NextResponse.json(
+        { error: 'Your free trial has ended. Please upgrade your plan to continue.' },
+        { status: 403 }
+      );
+    }
+    if (org.subscriptionStatus === 'ACTIVE' && org.subscriptionEndsAt && now > org.subscriptionEndsAt) {
+      return NextResponse.json(
+        { error: 'Your subscription has ended. Please renew to continue.' },
+        { status: 403 }
+      );
+    }
+
+    const user = await login(identifier, password, parseInt(organizationId));
 
     if (!user) {
       return NextResponse.json(
@@ -30,7 +59,6 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ success: true, requires2FA: true });
       }
 
-      // Verify TOTP
       const dbUser = await prisma.user.findUnique({ where: { id: user.id } });
       if (dbUser?.twoFactorSecret) {
         const isValid = authenticator.check(totpCode, dbUser.twoFactorSecret);

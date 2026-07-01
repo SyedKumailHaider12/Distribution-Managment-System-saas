@@ -1,50 +1,94 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { Lock, User, Eye, EyeOff, Building2, ArrowRight } from 'lucide-react';
+import { Lock, User, Eye, EyeOff, Building2, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '@/components/AuthProvider';
 import { BrandingSection } from '@/components/ui/BrandingSection';
 import { AboutSection } from '@/components/ui/AboutSection';
 import { PricingSection } from '@/components/ui/PricingSection';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 
 export default function LoginPage() {
   const router = useRouter();
   const { refresh } = useAuth();
-  const [organizations, setOrganizations] = useState<{ id: number, name: string }[]>([]);
-  const [organizationId, setOrganizationId] = useState('');
-  const [username, setUsername] = useState('');
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Org autocomplete
+  const [orgQuery, setOrgQuery] = useState('');
+  const [orgSuggestions, setOrgSuggestions] = useState<{ id: number; name: string }[]>([]);
+  const [selectedOrg, setSelectedOrg] = useState<{ id: number; name: string } | null>(null);
+  const [showDropdown, setShowDropdown] = useState(false);
+
+  // Credentials
+  const [identifier, setIdentifier] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
-  
+
+  // 2FA
   const [requires2FA, setRequires2FA] = useState(false);
   const [totpCode, setTotpCode] = useState('');
 
+  // Debounced org search
   useEffect(() => {
-    fetch('/api/organizations')
-      .then(res => res.json())
-      .then(data => {
-        setOrganizations(data);
-        if (data.length > 0) setOrganizationId(data[0].id.toString());
-      })
-      .catch(err => console.error('Failed to fetch orgs', err));
+    if (orgQuery.length < 1 || selectedOrg) {
+      setOrgSuggestions([]);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      const res = await fetch(`/api/organizations/search?q=${encodeURIComponent(orgQuery)}`);
+      const data = await res.json();
+      setOrgSuggestions(data);
+      setShowDropdown(data.length > 0);
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [orgQuery, selectedOrg]);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
   }, []);
+
+  const handleSelectOrg = (org: { id: number; name: string }) => {
+    setSelectedOrg(org);
+    setOrgQuery(org.name);
+    setShowDropdown(false);
+    setOrgSuggestions([]);
+  };
+
+  const handleOrgInputChange = (val: string) => {
+    setOrgQuery(val);
+    if (selectedOrg && val !== selectedOrg.name) {
+      setSelectedOrg(null); // reset selection if user edits
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+
+    if (!selectedOrg) {
+      setError('Please select your organization from the dropdown suggestions.');
+      return;
+    }
+
     setLoading(true);
 
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username, password, organizationId, totpCode }),
+        body: JSON.stringify({ identifier, password, organizationId: selectedOrg.id, totpCode }),
       });
 
       const data = await res.json();
@@ -120,39 +164,65 @@ export default function LoginPage() {
 
               {!requires2FA ? (
                 <>
-                  {/* Organization Field */}
-                  <div className="space-y-2 group">
+                  {/* Organization Autocomplete */}
+                  <div className="space-y-2">
                     <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">Organization</label>
-                    <div className="relative">
-                      <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-indigo-500 transition-colors" />
-                      <select
-                        value={organizationId}
-                        onChange={(e) => setOrganizationId(e.target.value)}
-                        className="w-full h-[44px] pl-12 pr-10 bg-[#0B1220] border border-white/5 rounded-[12px] text-white focus:outline-none focus:ring-1 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all appearance-none cursor-pointer text-sm font-medium shadow-inner"
+                    <div className="relative" ref={dropdownRef}>
+                      <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 z-10 transition-colors" />
+                      <input
+                        type="text"
+                        autoComplete="off"
+                        value={orgQuery}
+                        onChange={(e) => handleOrgInputChange(e.target.value)}
+                        onFocus={() => { if (orgSuggestions.length > 0) setShowDropdown(true); }}
+                        className={`w-full h-[44px] pl-12 pr-10 bg-[#0B1220] border rounded-[12px] text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all text-sm font-medium shadow-inner ${selectedOrg ? 'border-emerald-500/40' : 'border-white/5'}`}
+                        placeholder="Type your organization name..."
                         required
-                      >
-                        <option value="">Select Organization</option>
-                        {organizations.map(org => (
-                          <option key={org.id} value={org.id}>{org.name}</option>
-                        ))}
-                      </select>
-                      <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
-                        <svg className="w-4 h-4 fill-current" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" /></svg>
-                      </div>
+                      />
+                      {selectedOrg && (
+                        <CheckCircle2 className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-400" />
+                      )}
+                      <AnimatePresence>
+                        {showDropdown && orgSuggestions.length > 0 && (
+                          <motion.ul
+                            initial={{ opacity: 0, y: -6 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -6 }}
+                            transition={{ duration: 0.15 }}
+                            className="absolute z-50 top-full mt-1.5 w-full bg-[#0d1526] border border-white/10 rounded-xl shadow-2xl overflow-hidden"
+                          >
+                            {orgSuggestions.map((org) => (
+                              <li key={org.id}>
+                                <button
+                                  type="button"
+                                  onClick={() => handleSelectOrg(org)}
+                                  className="w-full text-left px-4 py-3 text-sm text-white hover:bg-indigo-500/10 hover:text-indigo-300 transition-colors flex items-center gap-3"
+                                >
+                                  <Building2 className="w-4 h-4 text-slate-500 flex-shrink-0" />
+                                  {org.name}
+                                </button>
+                              </li>
+                            ))}
+                          </motion.ul>
+                        )}
+                      </AnimatePresence>
                     </div>
+                    {orgQuery.length > 0 && !selectedOrg && orgSuggestions.length === 0 && (
+                      <p className="text-xs text-slate-500 ml-1">No matching organizations found.</p>
+                    )}
                   </div>
 
-                  {/* Username Field */}
+                  {/* Username or Email */}
                   <div className="space-y-2 group">
-                    <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">Username</label>
+                    <label className="text-[11px] font-black text-slate-500 uppercase tracking-[0.1em] ml-1">Username or Email</label>
                     <div className="relative">
                       <User className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-500 group-focus-within:text-indigo-500 transition-colors" />
                       <input
                         type="text"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
+                        value={identifier}
+                        onChange={(e) => setIdentifier(e.target.value)}
                         className="w-full h-[44px] pl-12 pr-4 bg-[#0B1220] border border-white/5 rounded-[12px] text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all text-sm font-medium shadow-inner"
-                        placeholder="e.g. kumail_rizvi"
+                        placeholder="Enter username or email"
                         required
                       />
                     </div>
@@ -216,7 +286,7 @@ export default function LoginPage() {
 
               <button
                 type="submit"
-                disabled={loading || !organizationId}
+                disabled={loading || (!requires2FA && !selectedOrg)}
                 className="w-full h-[52px] bg-gradient-to-r from-[#6D5DFC] to-[#8B5CF6] hover:shadow-[0_8px_20px_rgba(109,93,252,0.3)] text-white font-black rounded-[12px] transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 group text-sm tracking-[0.1em] uppercase mt-8"
               >
                 {loading ? (

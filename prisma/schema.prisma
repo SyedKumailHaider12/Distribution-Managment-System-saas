@@ -24,6 +24,8 @@ model Organization {
   subscriptionStatus String @default("TRIAL") // TRIAL, ACTIVE, EXPIRED
   trialEndsAt        DateTime?
   subscriptionEndsAt DateTime?
+  subscriptionFee    Float?   // Monthly/annual fee amount
+  paymentStatus      String   @default("PENDING") // PENDING, PAID, OVERDUE
   
   createdAt     DateTime @default(now())
 
@@ -154,6 +156,7 @@ model User {
   otpExpiry      DateTime?
   twoFactorSecret String?
   twoFactorEnabled Boolean @default(false)
+  isBlocked        Boolean @default(false) // SuperAdmin can block login
 
   organization Organization @relation(fields: [organizationId], references: [id])
   employee     Employee?
@@ -173,6 +176,17 @@ model RolePermission {
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@unique([organizationId, role])
+}
+
+// === SUPER ADMIN ===
+model SuperAdmin {
+  id           Int      @id @default(autoincrement())
+  username     String   @unique
+  email        String   @unique
+  passwordHash String
+  fullName     String?
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
 }
 
 

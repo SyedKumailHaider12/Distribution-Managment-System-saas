@@ -24,12 +24,19 @@ export async function verifyPassword(password: string, hash: string): Promise<bo
   return bcrypt.compare(password, hash);
 }
 
-export async function login(username: string, password: string, organizationId: number): Promise<SessionUser | null> {
-  const user = await prisma.user.findUnique({
-    where: { username },
+export async function login(identifier: string, password: string, organizationId: number): Promise<SessionUser | null> {
+  // Find user by username OR email within the org
+  const user = await prisma.user.findFirst({
+    where: {
+      organizationId,
+      OR: [
+        { username: identifier },
+        { email: identifier }
+      ]
+    }
   });
 
-  if (!user || !user.isActive) {
+  if (!user || !user.isActive || user.isBlocked) {
     return null;
   }
 
