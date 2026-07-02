@@ -1,118 +1,358 @@
-PS D:\Other Projects\Distribution_Managment_System_WebSaas> npm run build  
- 
-> distribution-management-system@1.0.0 build
-> prisma generate && next build --webpack
+PS D:\Other Projects\Distribution_Managment_System_WebSaas> npm run dev
 
-Environment variables loaded from .env
-Prisma schema loaded from prisma\schema.prisma
+> distribution-management-system@1.0.0 dev
+> next dev --webpack
 
-✔ Generated Prisma Client (v5.22.0) to .\node_modules\@prisma\client in 322ms
-
-Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
-
-Tip: Curious about the SQL queries Prisma ORM generates? Optimize helps you enhance your visibility: https://pris.ly/tip-2-optimize
-
-⚠ Attempted to load @next/swc-win32-x64-msvc, but an error occurred: \\?\D:\Other Projects\Distribution_Managment_System_WebSaas\node_modules\@next\swc-win32-x64-msvc\next-swc.win32-x64-msvc.node is not a valid Win32 application.
-\\?\D:\Other Projects\Distribution_Managment_System_WebSaas\node_modules\@next\swc-win32-x64-msvc\next-swc.win32-x64-msvc.node
-  Skipping creating a lockfile at D:\Other Projects\Distribution_Managment_System_WebSaas\.next\lock because we're using WASM bindings
 ▲ Next.js 16.2.6 (webpack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.40.3:3000
 - Environments: .env
-
-⚠ The "middleware" file convention is deprecated. Please use "proxy" instead. Learn more: https://nextjs.org/docs/messages/middleware-to-proxy
-  Creating an optimized production build ...
+✓ Ready in 499ms
 ⚠ Attempted to load @next/swc-win32-x64-msvc, but an error occurred: \\?\D:\Other Projects\Distribution_Managment_System_WebSaas\node_modules\@next\swc-win32-x64-msvc\next-swc.win32-x64-msvc.node is not a valid Win32 application.
 \\?\D:\Other Projects\Distribution_Managment_System_WebSaas\node_modules\@next\swc-win32-x64-msvc\next-swc.win32-x64-msvc.node
+  Skipping creating a lockfile at D:\Other Projects\Distribution_Managment_System_WebSaas\.next\dev\lock because we're using WASM bindings
+
+[browser] Uncaught TypeError: network error
+TypeError: network error
+ GET /login 200 in 8.2s (next.js: 2.4s, proxy.ts: 165ms, application-code: 5.6s)
+ GET /login 200 in 330ms (next.js: 7ms, proxy.ts: 13ms, application-code: 310ms)
+ GET /api/auth/session 200 in 4.9s (next.js: 1843ms, application-code: 3.1s)
+ GET /login 200 in 3.7s (next.js: 69ms, proxy.ts: 9ms, application-code: 3.6s)
+ GET /api/auth/session 401 in 25ms (next.js: 8ms, application-code: 17ms)
+ GET /login 200 in 919ms (next.js: 3ms, proxy.ts: 5ms, application-code: 911ms)
+ GET /api/auth/session 200 in 601ms (next.js: 3ms, application-code: 598ms)
+ GET /api/auth/session 401 in 24ms (next.js: 8ms, application-code: 16ms)
+ GET /api/organizations/search?q=A 200 in 1590ms (next.js: 915ms, application-code: 675ms)
+ GET /api/organizations/search?q=Ar 200 in 466ms (next.js: 5ms, application-code: 461ms)
+ GET /login 200 in 790ms (next.js: 147ms, proxy.ts: 20ms, application-code: 623ms)
+ GET /login 200 in 153ms (next.js: 10ms, proxy.ts: 17ms, application-code: 126ms)
+ GET /login 200 in 163ms (next.js: 20ms, proxy.ts: 12ms, application-code: 131ms)
+ GET / 200 in 1064ms (next.js: 15ms, proxy.ts: 950ms, application-code: 99ms)
+ GET /login 200 in 599ms (next.js: 329ms, proxy.ts: 34ms, application-code: 235ms)
+ GET /login 200 in 108ms (next.js: 6ms, proxy.ts: 17ms, application-code: 84ms)
+ GET /login 200 in 1731ms (next.js: 414ms, proxy.ts: 34ms, application-code: 1282ms)
+ GET /login 200 in 1236ms (next.js: 40ms, proxy.ts: 17ms, application-code: 1179ms)
+ GET /api/auth/session 401 in 1158ms (next.js: 1109ms, application-code: 49ms)
+ GET /login 200 in 110ms (next.js: 80ms, proxy.ts: 7ms, application-code: 23ms)
+ GET /login 200 in 54ms (next.js: 3ms, proxy.ts: 4ms, application-code: 46ms)
+ GET /api/auth/session 401 in 21ms (next.js: 8ms, application-code: 13ms)
+ GET / 200 in 457ms (next.js: 35ms, proxy.ts: 10ms, application-code: 412ms)
+ GET /login 200 in 127ms (next.js: 8ms, proxy.ts: 11ms, application-code: 107ms)
+ GET /login 200 in 135ms (next.js: 7ms, proxy.ts: 12ms, application-code: 116ms)
+ GET / 200 in 273ms (next.js: 12ms, proxy.ts: 21ms, application-code: 240ms)
+ GET / 200 in 142ms (next.js: 12ms, proxy.ts: 16ms, application-code: 114ms)
+ GET / 200 in 248ms (next.js: 11ms, proxy.ts: 13ms, application-code: 224ms)
+ GET /login 200 in 1960ms (next.js: 9ms, proxy.ts: 56ms, application-code: 1896ms)
+ GET /api/auth/session 200 in 870ms (next.js: 8ms, application-code: 862ms)
+⚠ Found a change in next.config.ts. Restarting the server to apply the changes...
+▲ Next.js 16.2.6 (webpack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.40.3:3000
+- Environments: .env
+✓ Ready in 967ms
 ⚠ Attempted to load @next/swc-win32-x64-msvc, but an error occurred: \\?\D:\Other Projects\Distribution_Managment_System_WebSaas\node_modules\@next\swc-win32-x64-msvc\next-swc.win32-x64-msvc.node is not a valid Win32 application.
 \\?\D:\Other Projects\Distribution_Managment_System_WebSaas\node_modules\@next\swc-win32-x64-msvc\next-swc.win32-x64-msvc.node
-⚠ Attempted to load @next/swc-win32-x64-msvc, but an error occurred: \\?\D:\Other Projects\Distribution_Managment_System_WebSaas\node_modules\@next\swc-win32-x64-msvc\next-swc.win32-x64-msvc.node is not a valid Win32 application.
-\\?\D:\Other Projects\Distribution_Managment_System_WebSaas\node_modules\@next\swc-win32-x64-msvc\next-swc.win32-x64-msvc.node
-✓ Compiled successfully in 18.1s
-  Running TypeScript  ..⚠ Attempted to load @next/swc-win32-x64-msvc, but an error occurred: \\?\D:\Other Projects\Distribution_Managment_System_WebSaas\node_modules\@next\swc-win32-x64-msvc\next-swc.win32-x64-msvc.node is not a valid Win32 application.
-\\?\D:\Other Projects\Distribution_Managment_System_WebSaas\node_modules\@next\swc-win32-x64-msvc\next-swc.win32-x64-msvc.node
-  Running TypeScript  ..Error: invalid type: unit value, expected usize
-Next.js build worker exited with code: 1 and signal: null
-PS D:\Other Projects\Distribution_Managment_System_WebSaas> npx tsc --noEmit
-.next/types/app/api/superadmin/organizations/[id]/route.ts:248:7 - error TS2344: Type '{ __tag__: "DELETE"; __param_position__: "second"; __param_type__: { params: { id: string; }; }; }' does not satisfy the constraint 'ParamCheck<RouteContext>'.
-  The types of '__param_type__.params' are incompatible between these types.
-    Type '{ id: string; }' is missing the following properties from type 'Promise<any>': then, catch, finally, [Symbol.toStringTag]
+  Skipping creating a lockfile at D:\Other Projects\Distribution_Managment_System_WebSaas\.next\dev\lock because we're using WASM bindings
 
-248       {
-          ~
-249         __tag__: 'DELETE'
-    ~~~~~~~~~~~~~~~~~~~~~~~~~
-...
-251         __param_type__: SecondArg<MaybeField<TEntry, 'DELETE'>>        
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~        
-252       },
-    ~~~~~~~
+○ Compiling / ...
+ GET / 200 in 9.9s (next.js: 8.4s, proxy.ts: 392ms, application-code: 1083ms)
+ GET / 200 in 1423ms (next.js: 25ms, proxy.ts: 1195ms, application-code: 203ms)
+ GET /api/auth/session 401 in 996ms (next.js: 948ms, application-code: 48ms)
+ GET /login 200 in 16.0s (next.js: 8.4s, proxy.ts: 391ms, application-code: 7.2s)
+ GET / 200 in 648ms (next.js: 63ms, proxy.ts: 10ms, application-code: 575ms)
+ GET /api/auth/session 401 in 31ms (next.js: 4ms, application-code: 26ms)
+ GET /api/auth/session 401 in 5.0s (next.js: 4ms, application-code: 5.0s)
+ GET / 200 in 353ms (next.js: 6ms, proxy.ts: 19ms, application-code: 327ms)
+ GET / 200 in 517ms (next.js: 281ms, proxy.ts: 28ms, application-code: 208ms)
+ GET / 200 in 301ms (next.js: 194ms, proxy.ts: 30ms, application-code: 77ms)
+ GET /login 200 in 1818ms (next.js: 338ms, proxy.ts: 28ms, application-code: 1452ms)
+ GET / 200 in 307ms (next.js: 8ms, proxy.ts: 8ms, application-code: 291ms)
+ GET /login 200 in 5.3s (next.js: 123ms, proxy.ts: 30ms, application-code: 5.1s)
+ GET /login 200 in 100ms (next.js: 6ms, proxy.ts: 11ms, application-code: 84ms)
+ GET / 200 in 437ms (next.js: 38ms, proxy.ts: 337ms, application-code: 62ms)
+ GET /login 200 in 3.1s (next.js: 216ms, proxy.ts: 13ms, application-code: 2.9s)
+ GET / 200 in 274ms (next.js: 25ms, proxy.ts: 213ms, application-code: 36ms)
+ GET /login 200 in 2.3s (next.js: 146ms, proxy.ts: 9ms, application-code: 2.1s)
+ GET / 200 in 330ms (next.js: 9ms, proxy.ts: 14ms, application-code: 307ms)
+ GET / 200 in 197ms (next.js: 8ms, proxy.ts: 10ms, application-code: 179ms)
+ GET /login 200 in 1168ms (next.js: 56ms, proxy.ts: 9ms, application-code: 1103ms)
+ GET /api/auth/session 401 in 2.1s (next.js: 2.0s, application-code: 101ms)
+ GET /api/auth/session 401 in 1697ms (next.js: 1594ms, application-code: 103ms)
+ GET /api/auth/session 401 in 1114ms (next.js: 1007ms, application-code: 107ms)
+ GET /api/auth/session 401 in 2.2s (next.js: 2.1s, application-code: 112ms)
+ GET / 200 in 482ms (next.js: 152ms, proxy.ts: 282ms, application-code: 47ms)
+ GET / 200 in 840ms (next.js: 125ms, proxy.ts: 366ms, application-code: 349ms)
+ GET / 200 in 134ms (next.js: 4ms, proxy.ts: 7ms, application-code: 123ms)
+ GET /api/auth/session 401 in 13ms (next.js: 5ms, application-code: 8ms)
+ GET /api/auth/session 401 in 5.0s (next.js: 4ms, application-code: 5.0s)
+ GET / 200 in 87ms (next.js: 6ms, proxy.ts: 5ms, application-code: 75ms)
+ GET /api/auth/session 401 in 23ms (next.js: 7ms, application-code: 17ms)
+ GET /login 200 in 78ms (next.js: 37ms, proxy.ts: 12ms, application-code: 30ms)
+ GET /api/organizations/search?q=a 200 in 2.4s (next.js: 886ms, application-code: 1483ms)
+ GET /api/organizations/search?q=al%20b 200 in 578ms (next.js: 4ms, application-code: 574ms)
+ GET /api/organizations/search?q=al 200 in 4.8s (next.js: 7ms, application-code: 4.8s)
+ GET /api/organizations/search?q=al%20 200 in 5.7s (next.js: 5ms, application-code: 5.7s)
+ POST /api/auth/login 401 in 3.7s (next.js: 807ms, application-code: 2.9s)
+ POST /api/auth/login 200 in 2.2s (next.js: 6ms, application-code: 2.1s)
+ GET /api/auth/session 200 in 1239ms (next.js: 8ms, application-code: 1230ms)
+ GET /dashboard 200 in 1753ms (next.js: 1615ms, proxy.ts: 11ms, application-code: 127ms)
+ GET / 200 in 211ms (next.js: 98ms, proxy.ts: 18ms, application-code: 95ms)
+ GET / 200 in 101ms (next.js: 6ms, proxy.ts: 45ms, application-code: 50ms)
+ GET /login 200 in 1528ms (next.js: 35ms, proxy.ts: 18ms, application-code: 1474ms)
+ GET /login 200 in 2.4s (next.js: 11ms, proxy.ts: 7ms, application-code: 2.3s)
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⨯ ./src/app/login/page.tsx
+Error:   x Expected corresponding JSX closing tag for <div>
+     ,-[D:\Other Projects\Distribution_Managment_System_WebSaas\src\app\login\page.tsx:317:1]
+ 314 |       {/* Landing Content */}
+ 315 |       <AboutSection />
+ 316 |       <PricingSection />
+ 317 |     </main>
+     :       ^^^^
+ 318 |   );
+ 319 | }
+     `----
 
-.next/types/app/api/superadmin/organizations/[id]/route.ts:287:7 - error TS2344: Type '{ __tag__: "PATCH"; __param_position__: "second"; __param_type__: { params: { id: string; }; }; }' does not satisfy the constraint 'ParamCheck<RouteContext>'.
-  The types of '__param_type__.params' are incompatible between these types.
-    Type '{ id: string; }' is missing the following properties from type 'Promise<any>': then, catch, finally, [Symbol.toStringTag]
+Caused by:
+    0: failed to process js file
+    1: Syntax Error
+    at wasm.wasm.__wbindgen_error_new externref shim (wasm://wasm/wasm.wasm-084a3e6e:wasm-function[35092]:0x14cb866)
+    at wasm.wasm.wasm[1883d881a7905053]::transform_sync (wasm://wasm/wasm.wasm-084a3e6e:wasm-function[1005]:0x666203)
+    at wasm.wasm.wasm_bindgen_futures[9d7b310d6153a321]::future_to_promise::<wasm[1883d881a7905053]::transform::{closure#0}>::{closure#0}::{closure#0} (wasm://wasm/wasm.wasm-084a3e6e:wasm-function[13850]:0x11b9878)
+    at wasm.wasm.<wasm_bindgen_futures[9d7b310d6153a321]::queue::Queue>::new::{closure#0} (wasm://wasm/wasm.wasm-084a3e6e:wasm-function[9603]:0xff85b8)
+    at wasm.wasm.<dyn core[f69e0e472a72c355]::ops::function::FnMut<(_,), Output = _> as wasm_bindgen[d64814e1a33cf728]::closure::WasmClosure>::describe::invoke::<wasm_bindgen[d64814e1a33cf728]::JsValue, ()> (wasm://wasm/wasm.wasm-084a3e6e:wasm-function[34561]:0x14c7a1b)
+    at wasm.wasm.closure5233 externref shim (wasm://wasm/wasm.wasm-084a3e6e:wasm-function[35955]:0x14d0e94)
+Import trace for requested module:
+./src/app/login/page.tsx
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⨯ ./src/app/login/page.tsx
+Error:   x Expected corresponding JSX closing tag for <div>
+     ,-[D:\Other Projects\Distribution_Managment_System_WebSaas\src\app\login\page.tsx:317:1]
+ 314 |       {/* Landing Content */}
+ 315 |       <AboutSection />
+ 316 |       <PricingSection />
+ 317 |     </main>
+     :       ^^^^
+ 318 |   );
+ 319 | }
+     `----
 
-287       {
-          ~
-288         __tag__: 'PATCH'
-    ~~~~~~~~~~~~~~~~~~~~~~~~
-...
-290         __param_type__: SecondArg<MaybeField<TEntry, 'PATCH'>>
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-291       },
-    ~~~~~~~
-
-.next/types/app/api/superadmin/users/[id]/route.ts:287:7 - error TS2344: Type '{ __tag__: "PATCH"; __param_position__: "second"; __param_type__: { params: { id: string; }; }; }' does not satisfy the constraint 'ParamCheck<RouteContext>'.
-  The types of '__param_type__.params' are incompatible between these types.
-    Type '{ id: string; }' is missing the following properties from type 'Promise<any>': then, catch, finally, [Symbol.toStringTag]
-
-287       {
-          ~
-288         __tag__: 'PATCH'
-    ~~~~~~~~~~~~~~~~~~~~~~~~
-...
-290         __param_type__: SecondArg<MaybeField<TEntry, 'PATCH'>>
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-291       },
-    ~~~~~~~
-
-.next/types/validator.ts:576:31 - error TS2344: Type 'typeof import("D:/Other Projects/Distribution_Managment_System_WebSaas/src/app/api/superadmin/organizations/[id]/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/superadmin/organizations/[id]">'.
-  Types of property 'PATCH' are incompatible.
-    Type '(request: NextRequest, { params }: { params: { id: string; }; }) => Promise<NextResponse<{ error: string; }> | NextResponse<{ id: number; email: string | null; name: string; slug: string; ... 12 more ...; createdAt: Date; }>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; }>; }) => void | Response | Promise<void | Response>'.
-      Types of parameters '__1' and 'context' are incompatible.
-        Type '{ params: Promise<{ id: string; }>; }' is not assignable to type '{ params: { id: string; }; }'.
-          Types of property 'params' are incompatible.
-            Property 'id' is missing in type 'Promise<{ id: string; }>' but required in type '{ id: string; }'.
-
-576   type __Check = __IsExpected<typeof handler>
-                                  ~~~~~~~~~~~~~~
-
-  src/app/api/superadmin/organizations/[id]/route.ts:5:75
-    5 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
-                                                                           
-     ~~
-    'id' is declared here.
-
-.next/types/validator.ts:603:31 - error TS2344: Type 'typeof import("D:/Other Projects/Distribution_Managment_System_WebSaas/src/app/api/superadmin/users/[id]/route")' does not satisfy the constraint 'RouteHandlerConfig<"/api/superadmin/users/[id]">'.
-  Types of property 'PATCH' are incompatible.
-    Type '(request: NextRequest, { params }: { params: { id: string; }; }) => Promise<NextResponse<{ error: string; }> | NextResponse<{ success: boolean; isBlocked: boolean; }>>' is not assignable to type '(request: NextRequest, context: { params: Promise<{ id: string; }>; }) => void | Response | Promise<void | Response>'.
-      Types of parameters '__1' and 'context' are incompatible.
-        Type '{ params: Promise<{ id: string; }>; }' is not assignable to type '{ params: { id: string; }; }'.
-          Types of property 'params' are incompatible.
-            Property 'id' is missing in type 'Promise<{ id: string; }>' but required in type '{ id: string; }'.
-
-603   type __Check = __IsExpected<typeof handler>
-                                  ~~~~~~~~~~~~~~
-
-  src/app/api/superadmin/users/[id]/route.ts:5:75
-    5 export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
-                                                                           
-     ~~
-    'id' is declared here.
+Caused by:
+    0: failed to process js file
+    1: Syntax Error
+    at wasm.wasm.__wbindgen_error_new externref shim (wasm://wasm/wasm.wasm-084a3e6e:wasm-function[35092]:0x14cb866)
+    at wasm.wasm.wasm[1883d881a7905053]::transform_sync (wasm://wasm/wasm.wasm-084a3e6e:wasm-function[1005]:0x666203)
+    at wasm.wasm.wasm_bindgen_futures[9d7b310d6153a321]::future_to_promise::<wasm[1883d881a7905053]::transform::{closure#0}>::{closure#0}::{closure#0} (wasm://wasm/wasm.wasm-084a3e6e:wasm-function[13850]:0x11b9878)
+    at wasm.wasm.<wasm_bindgen_futures[9d7b310d6153a321]::queue::Queue>::new::{closure#0} (wasm://wasm/wasm.wasm-084a3e6e:wasm-function[9603]:0xff85b8)
+    at wasm.wasm.<dyn core[f69e0e472a72c355]::ops::function::FnMut<(_,), Output = _> as wasm_bindgen[d64814e1a33cf728]::closure::WasmClosure>::describe::invoke::<wasm_bindgen[d64814e1a33cf728]::JsValue, ()> (wasm://wasm/wasm.wasm-084a3e6e:wasm-function[34561]:0x14c7a1b)
+    at wasm.wasm.closure5233 externref shim (wasm://wasm/wasm.wasm-084a3e6e:wasm-function[35955]:0x14d0e94)
+Import trace for requested module:
+./src/app/login/page.tsx
+○ Compiling /_error ...
+ GET / 500 in 5.1s (next.js: 4.8s, proxy.ts: 39ms, application-code: 283ms)
+ GET /login 500 in 5.1s (next.js: 4.7s, proxy.ts: 147ms, application-code: 277ms)
+ GET / 500 in 344ms (next.js: 16ms, proxy.ts: 300ms, application-code: 28ms)
+ GET /login 500 in 109ms (next.js: 17ms, proxy.ts: 48ms, application-code: 44ms)
+ GET /login 500 in 119ms (next.js: 24ms, proxy.ts: 58ms, application-code: 37ms)
+⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+[browser] Uncaught ModuleBuildError: Module build failed (from ./node_modules/next/dist/build/webpack/loaders/next-swc-loader.js):
+Error:   x Expected corresponding JSX closing tag for <div>
+     ,-[D:\Other Projects\Distribution_Managment_System_WebSaas\src\app\login\page.tsx:317:1]
+ 314 |       {/* Landing Content */}
+ 315 |       <AboutSection />
+ 316 |       <PricingSection />
+ 317 |     </main>
+     :       ^^^^
+ 318 |   );
+ 319 | }
+     `----
 
 
-Found 5 errors in 3 files.
+Caused by:
+    0: failed to process js file
+    1: Syntax Error
+    at module.exports.__wbindgen_error_new (D:\Other Projects\Distribution_Managment_System_WebSaas\node_modules\next\wasm\@next\swc-wasm-nodejs\wasm.js:665:17)
+    at wasm.wasm.__wbindgen_error_new externref shim (wasm://wasm/wasm.wasm-084a3e6e:wasm-function[35092]:0x14cb866)
+    at wasm.wasm.wasm[1883d881a7905053]::transform_sync (wasm://wasm/wasm.wasm-084a3e6e:wasm-function[1005]:0x666203)
+    at wasm.wasm.wasm_bindgen_futures[9d7b310d6153a321]::future_to_promise::<wasm[1883d881a7905053]::transform::{closure#0}>::{closure#0}::{closure#0} (wasm://wasm/wasm.wasm-084a3e6e:wasm-function[13850]:0x11b9878)
+    at wasm.wasm.<wasm_bindgen_futures[9d7b310d6153a321]::queue::Queue>::new::{closure#0} (wasm://wasm/wasm.wasm-084a3e6e:wasm-function[9603]:0xff85b8)
+    at wasm.wasm.<dyn core[f69e0e472a72c355]::ops::function::FnMut<(_,), Output = _> as wasm_bindgen[d64814e1a33cf728]::closure::WasmClosure>::describe::invoke::<wasm_bindgen[d64814e1a33cf728]::JsValue, ()> (wasm://wasm/wasm.wasm-084a3e6e:wasm-function[34561]:0x14c7a1b)
+    at wasm.wasm.closure5233 externref shim (wasm://wasm/wasm.wasm-084a3e6e:wasm-function[35955]:0x14d0e94)
+    at __wbg_adapter_50 (D:\Other Projects\Distribution_Managment_System_WebSaas\node_modules\next\wasm\@next\swc-wasm-nodejs\wasm.js:367:10)
+    at real (D:\Other Projects\Distribution_Managment_System_WebSaas\node_modules\next\wasm\@next\swc-wasm-nodejs\wasm.js:140:20)
+    at node:internal/process/task_queues:150:7
+    at AsyncResource.runInAsyncScope (node:async_hooks:227:14)
+    at AsyncResource.runMicrotask (node:internal/process/task_queues:147:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+[browser] Uncaught ModuleBuildError: Module build failed (from ./node_modules/next/dist/build/webpack/loaders/next-swc-loader.js):
+Error:   x Expected corresponding JSX closing tag for <div>
+     ,-[D:\Other Projects\Distribution_Managment_System_WebSaas\src\app\login\page.tsx:317:1]
+ 314 |       {/* Landing Content */}
+ 315 |       <AboutSection />
+ 316 |       <PricingSection />
+ 317 |     </main>
+     :       ^^^^
+ 318 |   );
+ 319 | }
+     `----
 
-Errors  Files
-     2  .next/types/app/api/superadmin/organizations/[id]/route.ts:248     
-     1  .next/types/app/api/superadmin/users/[id]/route.ts:287
-     2  .next/types/validator.ts:576
-PS D:\Other Projects\Distribution_Managment_System_WebSaas> 
+
+Caused by:
+    0: failed to process js file
+    1: Syntax Error
+    at module.exports.__wbindgen_error_new (D:\Other Projects\Distribution_Managment_System_WebSaas\node_modules\next\wasm\@next\swc-wasm-nodejs\wasm.js:665:17)
+    at wasm.wasm.__wbindgen_error_new externref shim (wasm://wasm/wasm.wasm-084a3e6e:wasm-function[35092]:0x14cb866)
+    at wasm.wasm.wasm[1883d881a7905053]::transform_sync (wasm://wasm/wasm.wasm-084a3e6e:wasm-function[1005]:0x666203)
+    at wasm.wasm.wasm_bindgen_futures[9d7b310d6153a321]::future_to_promise::<wasm[1883d881a7905053]::transform::{closure#0}>::{closure#0}::{closure#0} (wasm://wasm/wasm.wasm-084a3e6e:wasm-function[13850]:0x11b9878)
+    at wasm.wasm.<wasm_bindgen_futures[9d7b310d6153a321]::queue::Queue>::new::{closure#0} (wasm://wasm/wasm.wasm-084a3e6e:wasm-function[9603]:0xff85b8)
+    at wasm.wasm.<dyn core[f69e0e472a72c355]::ops::function::FnMut<(_,), Output = _> as wasm_bindgen[d64814e1a33cf728]::closure::WasmClosure>::describe::invoke::<wasm_bindgen[d64814e1a33cf728]::JsValue, ()> (wasm://wasm/wasm.wasm-084a3e6e:wasm-function[34561]:0x14c7a1b)
+    at wasm.wasm.closure5233 externref shim (wasm://wasm/wasm.wasm-084a3e6e:wasm-function[35955]:0x14d0e94)
+    at __wbg_adapter_50 (D:\Other Projects\Distribution_Managment_System_WebSaas\node_modules\next\wasm\@next\swc-wasm-nodejs\wasm.js:367:10)
+    at real (D:\Other Projects\Distribution_Managment_System_WebSaas\node_modules\next\wasm\@next\swc-wasm-nodejs\wasm.js:140:20)
+    at node:internal/process/task_queues:150:7
+    at AsyncResource.runInAsyncScope (node:async_hooks:227:14)
+    at AsyncResource.runMicrotask (node:internal/process/task_queues:147:8)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /login 500 in 124ms (proxy.ts: 31ms)
+⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET / 500 in 320ms (proxy.ts: 161ms)
+⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /login 200 in 1236ms (next.js: 433ms, proxy.ts: 29ms, application-code: 773ms)
+ GET / 200 in 1429ms (next.js: 557ms, proxy.ts: 29ms, application-code: 842ms)
+⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /login 200 in 469ms (next.js: 14ms, proxy.ts: 30ms, application-code: 426ms)
+⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET /login 200 in 2.2s (next.js: 7ms, proxy.ts: 11ms, application-code: 2.2s)
+ GET /login 200 in 1494ms (next.js: 6ms, proxy.ts: 7ms, application-code: 1481ms)
+○ Compiling /api/auth/session ...
+⨯ ./src/app/page.tsx
+Error:   x Expected corresponding JSX closing tag for <div>
+     ,-[D:\Other Projects\Distribution_Managment_System_WebSaas\src\app\page.tsx:99:1]
+  96 |       {/* Page Sections */}
+  97 |       <AboutSection />
+  98 |       <PricingSection />
+  99 |     </main>
+     :       ^^^^
+ 100 |   );
+ 101 | }
+     `----
+
+Caused by:
+    0: failed to process js file
+    1: Syntax Error
+    at wasm.wasm.__wbindgen_error_new externref shim (wasm://wasm/wasm.wasm-084a3e6e:wasm-function[35092]:0x14cb866)
+    at wasm.wasm.wasm[1883d881a7905053]::transform_sync (wasm://wasm/wasm.wasm-084a3e6e:wasm-function[1005]:0x666203)
+    at wasm.wasm.wasm_bindgen_futures[9d7b310d6153a321]::future_to_promise::<wasm[1883d881a7905053]::transform::{closure#0}>::{closure#0}::{closure#0} (wasm://wasm/wasm.wasm-084a3e6e:wasm-function[13850]:0x11b9878)
+    at wasm.wasm.<wasm_bindgen_futures[9d7b310d6153a321]::queue::Queue>::new::{closure#0} (wasm://wasm/wasm.wasm-084a3e6e:wasm-function[9603]:0xff85b8)
+    at wasm.wasm.<dyn core[f69e0e472a72c355]::ops::function::FnMut<(_,), Output = _> as wasm_bindgen[d64814e1a33cf728]::closure::WasmClosure>::describe::invoke::<wasm_bindgen[d64814e1a33cf728]::JsValue, ()> (wasm://wasm/wasm.wasm-084a3e6e:wasm-function[34561]:0x14c7a1b)
+    at wasm.wasm.closure5233 externref shim (wasm://wasm/wasm.wasm-084a3e6e:wasm-function[35955]:0x14d0e94)
+Import trace for requested module:
+./src/app/page.tsx
+ GET /api/auth/session 500 in 3.1s (next.js: 3.1s, application-code: 38ms)
+ GET / 500 in 42ms (next.js: 10ms, proxy.ts: 9ms, application-code: 22ms)
+ GET / 500 in 103ms (next.js: 11ms, proxy.ts: 69ms, application-code: 23ms)
+ GET /api/auth/session 500 in 36ms (next.js: 4ms, application-code: 33ms)
+ GET /login 500 in 37ms (next.js: 8ms, proxy.ts: 8ms, application-code: 21ms)
+[browser] Uncaught ModuleBuildError: Module build failed (from ./node_modules/next/dist/build/webpack/loaders/next-swc-loader.js):
+Error:   x Expected corresponding JSX closing tag for <div>
+     ,-[D:\Other Projects\Distribution_Managment_System_WebSaas\src\app\page.tsx:99:1]
+  96 |       {/* Page Sections */}
+  97 |       <AboutSection />
+  98 |       <PricingSection />
+  99 |     </main>
+     :       ^^^^
+ 100 |   );
+ 101 | }
+     `----
+
+
+Caused by:
+    0: failed to process js file
+    1: Syntax Error
+    at module.exports.__wbindgen_error_new (D:\Other Projects\Distribution_Managment_System_WebSaas\node_modules\next\wasm\@next\swc-wasm-nodejs\wasm.js:665:17)
+    at wasm.wasm.__wbindgen_error_new externref shim (wasm://wasm/wasm.wasm-084a3e6e:wasm-function[35092]:0x14cb866)
+    at wasm.wasm.wasm[1883d881a7905053]::transform_sync (wasm://wasm/wasm.wasm-084a3e6e:wasm-function[1005]:0x666203)
+    at wasm.wasm.wasm_bindgen_futures[9d7b310d6153a321]::future_to_promise::<wasm[1883d881a7905053]::transform::{closure#0}>::{closure#0}::{closure#0} (wasm://wasm/wasm.wasm-084a3e6e:wasm-function[13850]:0x11b9878)
+    at wasm.wasm.<wasm_bindgen_futures[9d7b310d6153a321]::queue::Queue>::new::{closure#0} (wasm://wasm/wasm.wasm-084a3e6e:wasm-function[9603]:0xff85b8)
+    at wasm.wasm.<dyn core[f69e0e472a72c355]::ops::function::FnMut<(_,), Output = _> as wasm_bindgen[d64814e1a33cf728]::closure::WasmClosure>::describe::invoke::<wasm_bindgen[d64814e1a33cf728]::JsValue, ()> (wasm://wasm/wasm.wasm-084a3e6e:wasm-function[34561]:0x14c7a1b)
+    at wasm.wasm.closure5233 externref shim (wasm://wasm/wasm.wasm-084a3e6e:wasm-function[35955]:0x14d0e94)
+    at __wbg_adapter_50 (D:\Other Projects\Distribution_Managment_System_WebSaas\node_modules\next\wasm\@next\swc-wasm-nodejs\wasm.js:367:10)
+    at real (D:\Other Projects\Distribution_Managment_System_WebSaas\node_modules\next\wasm\@next\swc-wasm-nodejs\wasm.js:140:20)
+    at node:internal/process/task_queues:150:7
+    at AsyncResource.runInAsyncScope (node:async_hooks:227:14)
+    at AsyncResource.runMicrotask (node:internal/process/task_queues:147:8)
+[browser] Uncaught ModuleBuildError: Module build failed (from ./node_modules/next/dist/build/webpack/loaders/next-swc-loader.js):
+Error:   x Expected corresponding JSX closing tag for <div>
+     ,-[D:\Other Projects\Distribution_Managment_System_WebSaas\src\app\page.tsx:99:1]
+  96 |       {/* Page Sections */}
+  97 |       <AboutSection />
+  98 |       <PricingSection />
+  99 |     </main>
+     :       ^^^^
+ 100 |   );
+ 101 | }
+     `----
+
+
+Caused by:
+    0: failed to process js file
+    1: Syntax Error
+    at module.exports.__wbindgen_error_new (D:\Other Projects\Distribution_Managment_System_WebSaas\node_modules\next\wasm\@next\swc-wasm-nodejs\wasm.js:665:17)
+    at wasm.wasm.__wbindgen_error_new externref shim (wasm://wasm/wasm.wasm-084a3e6e:wasm-function[35092]:0x14cb866)
+    at wasm.wasm.wasm[1883d881a7905053]::transform_sync (wasm://wasm/wasm.wasm-084a3e6e:wasm-function[1005]:0x666203)
+    at wasm.wasm.wasm_bindgen_futures[9d7b310d6153a321]::future_to_promise::<wasm[1883d881a7905053]::transform::{closure#0}>::{closure#0}::{closure#0} (wasm://wasm/wasm.wasm-084a3e6e:wasm-function[13850]:0x11b9878)
+    at wasm.wasm.<wasm_bindgen_futures[9d7b310d6153a321]::queue::Queue>::new::{closure#0} (wasm://wasm/wasm.wasm-084a3e6e:wasm-function[9603]:0xff85b8)
+    at wasm.wasm.<dyn core[f69e0e472a72c355]::ops::function::FnMut<(_,), Output = _> as wasm_bindgen[d64814e1a33cf728]::closure::WasmClosure>::describe::invoke::<wasm_bindgen[d64814e1a33cf728]::JsValue, ()> (wasm://wasm/wasm.wasm-084a3e6e:wasm-function[34561]:0x14c7a1b)
+    at wasm.wasm.closure5233 externref shim (wasm://wasm/wasm.wasm-084a3e6e:wasm-function[35955]:0x14d0e94)
+    at __wbg_adapter_50 (D:\Other Projects\Distribution_Managment_System_WebSaas\node_modules\next\wasm\@next\swc-wasm-nodejs\wasm.js:367:10)
+    at real (D:\Other Projects\Distribution_Managment_System_WebSaas\node_modules\next\wasm\@next\swc-wasm-nodejs\wasm.js:140:20)
+    at node:internal/process/task_queues:150:7
+    at AsyncResource.runInAsyncScope (node:async_hooks:227:14)
+    at AsyncResource.runMicrotask (node:internal/process/task_queues:147:8)
+[browser] ./src/app/page.tsx
+Error:   x Expected corresponding JSX closing tag for <div>
+     ,-[D:\Other Projects\Distribution_Managment_System_WebSaas\src\app\page.tsx:99:1]
+  96 |       {/* Page Sections */}
+  97 |       <AboutSection />
+  98 |       <PricingSection />
+  99 |     </main>
+     :       ^^^^
+ 100 |   );
+ 101 | }
+     `----
+
+Caused by:
+    0: failed to process js file
+    1: Syntax Error
+    at wasm.wasm.__wbindgen_error_new externref shim (wasm://wasm/wasm.wasm-084a3e6e:wasm-function[35092]:0x14cb866)
+    at wasm.wasm.wasm[1883d881a7905053]::transform_sync (wasm://wasm/wasm.wasm-084a3e6e:wasm-function[1005]:0x666203)
+    at wasm.wasm.wasm_bindgen_futures[9d7b310d6153a321]::future_to_promise::<wasm[1883d881a7905053]::transform::{closure#0}>::{closure#0}::{closure#0} (wasm://wasm/wasm.wasm-084a3e6e:wasm-function[13850]:0x11b9878)
+    at wasm.wasm.<wasm_bindgen_futures[9d7b310d6153a321]::queue::Queue>::new::{closure#0} (wasm://wasm/wasm.wasm-084a3e6e:wasm-function[9603]:0xff85b8)
+    at wasm.wasm.<dyn core[f69e0e472a72c355]::ops::function::FnMut<(_,), Output = _> as wasm_bindgen[d64814e1a33cf728]::closure::WasmClosure>::describe::invoke::<wasm_bindgen[d64814e1a33cf728]::JsValue, ()> (wasm://wasm/wasm.wasm-084a3e6e:wasm-function[34561]:0x14c7a1b)
+    at wasm.wasm.closure5233 externref shim (wasm://wasm/wasm.wasm-084a3e6e:wasm-function[35955]:0x14d0e94)
+⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET / 500 in 163ms (proxy.ts: 41ms)
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ GET /login 200 in 664ms (next.js: 92ms, proxy.ts: 404ms, application-code: 169ms)
+ GET / 200 in 1566ms (next.js: 401ms, proxy.ts: 52ms, application-code: 1113ms)
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ GET /login 200 in 502ms (next.js: 21ms, proxy.ts: 42ms, application-code: 438ms)
+ GET /login 200 in 3.1s (next.js: 309ms, proxy.ts: 670ms, application-code: 2.1s)
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ GET /login 200 in 2.3s (next.js: 11ms, proxy.ts: 13ms, application-code: 2.3s)
+ GET /api/auth/session 401 in 44ms (next.js: 20ms, application-code: 23ms)
+ GET /login 200 in 1686ms (next.js: 8ms, proxy.ts: 10ms, application-code: 1669ms)
+ GET /login 200 in 1867ms (next.js: 8ms, proxy.ts: 11ms, application-code: 1848ms)
+ GET /api/auth/session 200 in 937ms (next.js: 4ms, application-code: 933ms)
+ GET / 200 in 181ms (next.js: 14ms, proxy.ts: 13ms, application-code: 154ms)
+ GET / 200 in 124ms (next.js: 11ms, proxy.ts: 60ms, application-code: 53ms)
+ GET /login 200 in 1553ms (next.js: 20ms, proxy.ts: 30ms, application-code: 1504ms)
+ GET /login 200 in 1211ms (next.js: 13ms, proxy.ts: 16ms, application-code: 1183ms)
+ GET / 2

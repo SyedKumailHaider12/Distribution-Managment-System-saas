@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
-import { Search, Bell, Sun, Moon, User, ChevronDown, X, Package, ShoppingCart, Users, Building2, Warehouse, Tag, FileText, Truck, RotateCcw, BarChart3, Settings, LogOut, LayoutDashboard, ClipboardList } from 'lucide-react';
+import { Search, Bell, Sun, Moon, User, ChevronDown, ChevronLeft, ChevronRight, X, Package, ShoppingCart, Users, Building2, Warehouse, Tag, FileText, Truck, RotateCcw, BarChart3, Settings, LogOut, LayoutDashboard, ClipboardList } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useTheme } from './ThemeProvider';
 import { useAuth } from './AuthProvider';
@@ -39,6 +39,19 @@ export const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('');
   const profileRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLElement>(null);
+
+  const scrollLeft = () => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollBy({ left: -250, behavior: 'smooth' });
+    }
+  };
+
+  const scrollRight = () => {
+    if (scrollRef.current) {
+      scrollRef.current.scrollBy({ left: 250, behavior: 'smooth' });
+    }
+  };
 
   const handleLogout = async () => {
     try {
@@ -144,28 +157,44 @@ export const Header: React.FC<HeaderProps> = ({ toggleSidebar }) => {
       </div>
 
       {/* Navigation Tabs - Desktop */}
-      <nav className="hidden md:flex items-center gap-1 px-4 md:px-6 py-2 overflow-x-auto scrollbar-none">
-        {NAV_TABS.map((tab) => {
-          const Icon = tab.icon;
-          const isActive = pathname.startsWith(tab.href);
-          return (
-            <Link
-              key={tab.name}
-              href={tab.href}
-              className={`
-                flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all
-                ${isActive
-                  ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400'
-                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'
-                }
-              `}
-            >
-              <Icon className={`w-4 h-4 ${isActive ? 'text-indigo-600 dark:text-indigo-400' : ''}`} />
-              {tab.name}
-            </Link>
-          );
-        })}
-      </nav>
+      <div className="hidden md:flex items-center relative border-b border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-900 group">
+        <button 
+          onClick={scrollLeft} 
+          className="absolute left-0 z-10 h-full px-2 text-slate-400 hover:text-indigo-600 bg-gradient-to-r from-white via-white to-transparent dark:from-slate-900 dark:via-slate-900 dark:hover:text-indigo-400 transition-colors opacity-0 group-hover:opacity-100"
+        >
+          <ChevronLeft className="w-5 h-5" />
+        </button>
+        
+        <nav ref={scrollRef} className="flex items-center gap-1 px-6 py-2 overflow-x-auto scrollbar-none scroll-smooth w-full">
+          {NAV_TABS.map((tab) => {
+            const Icon = tab.icon;
+            const isActive = pathname.startsWith(tab.href);
+            return (
+              <Link
+                key={tab.name}
+                href={tab.href}
+                className={`
+                  flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all shrink-0
+                  ${isActive
+                    ? 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400'
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white'
+                  }
+                `}
+              >
+                <Icon className={`w-4 h-4 ${isActive ? 'text-indigo-600 dark:text-indigo-400' : ''}`} />
+                {tab.name}
+              </Link>
+            );
+          })}
+        </nav>
+
+        <button 
+          onClick={scrollRight} 
+          className="absolute right-0 z-10 h-full px-2 text-slate-400 hover:text-indigo-600 bg-gradient-to-l from-white via-white to-transparent dark:from-slate-900 dark:via-slate-900 dark:hover:text-indigo-400 transition-colors opacity-0 group-hover:opacity-100"
+        >
+          <ChevronRight className="w-5 h-5" />
+        </button>
+      </div>
 
       {/* Mobile Menu */}
       <AnimatePresence>

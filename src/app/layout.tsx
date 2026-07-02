@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
 import { ClientLayout } from '@/components/ClientLayout'
@@ -18,14 +18,26 @@ export const metadata: Metadata = {
   },
 }
 
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+}
+
 export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
-  // Fetch settings from database
-  const theme = await getSettingValue('theme') || 'dark'
-  const currency = await getSettingValue('currency') || 'PKR'
+  // Fetch settings from database — fallback to defaults if DB is unreachable
+  let theme = 'dark'
+  let currency = 'PKR'
+  try {
+    theme = await getSettingValue('theme') || 'dark'
+    currency = await getSettingValue('currency') || 'PKR'
+  } catch {
+    // DB unreachable (e.g. Neon cold start) — use safe defaults
+  }
 
   return (
     <html lang="en" data-theme={theme} suppressHydrationWarning>

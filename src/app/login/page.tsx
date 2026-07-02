@@ -7,7 +7,6 @@ import { useAuth } from '@/components/AuthProvider';
 import { BrandingSection } from '@/components/ui/BrandingSection';
 import { AboutSection } from '@/components/ui/AboutSection';
 import { PricingSection } from '@/components/ui/PricingSection';
-import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 
 export default function LoginPage() {
@@ -37,14 +36,20 @@ export default function LoginPage() {
   useEffect(() => {
     if (orgQuery.length < 1 || selectedOrg) {
       setOrgSuggestions([]);
+      setShowDropdown(false);
       return;
     }
     const timer = setTimeout(async () => {
-      const res = await fetch(`/api/organizations/search?q=${encodeURIComponent(orgQuery)}`);
-      const data = await res.json();
-      setOrgSuggestions(data);
-      setShowDropdown(data.length > 0);
-    }, 250);
+      try {
+        const res = await fetch(`/api/organizations/search?q=${encodeURIComponent(orgQuery)}`);
+        if (!res.ok) return;
+        const data = await res.json();
+        setOrgSuggestions(Array.isArray(data) ? data : []);
+        setShowDropdown(Array.isArray(data) && data.length > 0);
+      } catch {
+        // network error — silently ignore
+      }
+    }, 300);
     return () => clearTimeout(timer);
   }, [orgQuery, selectedOrg]);
 
@@ -85,11 +90,17 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
+      // Use AbortController so slow DB/network doesn't freeze the button forever
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 15000);
+
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ identifier, password, organizationId: selectedOrg.id, totpCode }),
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
 
       const data = await res.json();
 
@@ -107,27 +118,29 @@ export default function LoginPage() {
       await refresh();
       router.push('/dashboard');
       router.refresh();
-    } catch {
-      setError('An error occurred. Please try again.');
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name === 'AbortError') {
+        setError('Request timed out. The server may be starting up — please try again in a few seconds.');
+      } else {
+        setError('Network error. Please check your connection and try again.');
+      }
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <main className="flex-1 flex flex-col bg-[#050816]">
+    <div className="flex-1 flex flex-col" style={{ background: 'var(--hero-bg)' }}>
       {/* Hero Section with Split Layout */}
-      <section className="relative min-h-screen flex flex-col lg:flex-row overflow-hidden">
+      <section className="relative min-h-screen flex flex-col lg:flex-row">
         
         {/* LEFT SIDE: Visual / Branding (55%) */}
-        <div id="products" className="lg:w-[55%] h-full relative hidden lg:block bg-[#0B1220] border-r border-white/5">
-           <div className="absolute inset-0 overflow-hidden">
-              {/* Soft blurred shapes / blobs */}
+        <div id="products" className="lg:w-[55%] h-full relative hidden lg:block border-r" style={{ background: 'var(--hero-left-bg)', borderColor: 'var(--hero-border)' }}>
+           <div className="absolute inset-0 overflow-hidden pointer-events-none">
               <div className="absolute top-[-10%] left-[-10%] w-[60%] h-[60%] bg-indigo-600/10 rounded-full blur-[120px]" />
               <div className="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] bg-purple-600/10 rounded-full blur-[120px]" />
               <div className="absolute top-[30%] right-[-5%] w-[30%] h-[30%] bg-blue-600/5 rounded-full blur-[100px]" />
            </div>
-           
            <div className="relative z-10 h-full flex items-center justify-center p-12">
              <div className="w-full h-full max-w-2xl">
                <BrandingSection />
@@ -136,30 +149,26 @@ export default function LoginPage() {
         </div>
 
         {/* RIGHT SIDE: Form Container (45%) */}
-        <div className="flex-1 flex items-center justify-center p-6 md:p-12 relative z-20">
-          <motion.div 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className="w-full max-w-[460px] bg-[#111827]/75 backdrop-blur-[20px] rounded-[24px] border border-white/10 p-8 md:p-10 shadow-[0_20px_60px_rgba(0,0,0,0.4)]"
+        <div className="flex-1 flex items-start lg:items-center justify-center p-6 md:p-12 relative z-20 pt-20 lg:pt-12">
+          <div 
+            className="w-full max-w-[460px] rounded-[24px] p-8 md:p-10 shadow-[0_20px_60px_rgba(0,0,0,0.15)] animate-fadeIn border"
+            style={{ background: 'var(--hero-card-bg)', borderColor: 'var(--hero-border)', backdropFilter: 'blur(20px)' }}
           >
             <div className="mb-10">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 text-indigo-400 text-[10px] font-black uppercase tracking-widest mb-6 border border-indigo-500/20">
                 🚀 7-Day Free Trial Active
               </div>
-              <h2 className="text-3xl font-black text-white mb-3 tracking-tight">Welcome Back</h2>
-              <p className="text-slate-400 text-sm font-medium">Please enter your details to sign in.</p>
+              <h2 className="text-3xl font-black mb-3 tracking-tight" style={{ color: 'var(--hero-text)' }}>Welcome Back</h2>
+              <p className="text-sm font-medium" style={{ color: 'var(--hero-text-muted)' }}>Please enter your details to sign in.</p>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
               {error && (
-                <motion.div 
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
+                <div 
                   className="bg-red-500/10 border border-red-500/20 text-red-400 px-4 py-3 rounded-xl text-sm font-medium"
                 >
                   {error}
-                </motion.div>
+                </div>
               )}
 
               {!requires2FA ? (
@@ -175,37 +184,30 @@ export default function LoginPage() {
                         value={orgQuery}
                         onChange={(e) => handleOrgInputChange(e.target.value)}
                         onFocus={() => { if (orgSuggestions.length > 0) setShowDropdown(true); }}
-                        className={`w-full h-[44px] pl-12 pr-10 bg-[#0B1220] border rounded-[12px] text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all text-sm font-medium shadow-inner ${selectedOrg ? 'border-emerald-500/40' : 'border-white/5'}`}
+                        className={`w-full h-[44px] pl-12 pr-10 border rounded-[12px] placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all text-sm font-medium shadow-inner ${selectedOrg ? 'border-emerald-500/40' : ''}`}
+                        style={{ background: 'var(--hero-input-bg)', color: 'var(--hero-text)', borderColor: selectedOrg ? undefined : 'var(--hero-border)' }}
                         placeholder="Type your organization name..."
                         required
                       />
                       {selectedOrg && (
                         <CheckCircle2 className="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-emerald-400" />
                       )}
-                      <AnimatePresence>
-                        {showDropdown && orgSuggestions.length > 0 && (
-                          <motion.ul
-                            initial={{ opacity: 0, y: -6 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: -6 }}
-                            transition={{ duration: 0.15 }}
-                            className="absolute z-50 top-full mt-1.5 w-full bg-[#0d1526] border border-white/10 rounded-xl shadow-2xl overflow-hidden"
-                          >
-                            {orgSuggestions.map((org) => (
-                              <li key={org.id}>
-                                <button
-                                  type="button"
-                                  onClick={() => handleSelectOrg(org)}
-                                  className="w-full text-left px-4 py-3 text-sm text-white hover:bg-indigo-500/10 hover:text-indigo-300 transition-colors flex items-center gap-3"
-                                >
-                                  <Building2 className="w-4 h-4 text-slate-500 flex-shrink-0" />
-                                  {org.name}
-                                </button>
-                              </li>
-                            ))}
-                          </motion.ul>
-                        )}
-                      </AnimatePresence>
+                      {showDropdown && orgSuggestions.length > 0 && (
+                        <ul className="absolute z-[999] top-full mt-1.5 w-full bg-[#0d1526] border border-white/10 rounded-xl shadow-2xl overflow-hidden">
+                          {orgSuggestions.map((org) => (
+                            <li key={org.id}>
+                              <button
+                                type="button"
+                                onClick={() => handleSelectOrg(org)}
+                                className="w-full text-left px-4 py-3 text-sm text-white hover:bg-indigo-500/10 hover:text-indigo-300 transition-colors flex items-center gap-3"
+                              >
+                                <Building2 className="w-4 h-4 text-slate-500 flex-shrink-0" />
+                                {org.name}
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
                     </div>
                     {orgQuery.length > 0 && !selectedOrg && orgSuggestions.length === 0 && (
                       <p className="text-xs text-slate-500 ml-1">No matching organizations found.</p>
@@ -221,7 +223,8 @@ export default function LoginPage() {
                         type="text"
                         value={identifier}
                         onChange={(e) => setIdentifier(e.target.value)}
-                        className="w-full h-[44px] pl-12 pr-4 bg-[#0B1220] border border-white/5 rounded-[12px] text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all text-sm font-medium shadow-inner"
+                        className="w-full h-[44px] pl-12 pr-4 border rounded-[12px] placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all text-sm font-medium shadow-inner"
+                        style={{ background: 'var(--hero-input-bg)', color: 'var(--hero-text)', borderColor: 'var(--hero-border)' }}
                         placeholder="Enter username or email"
                         required
                       />
@@ -240,7 +243,8 @@ export default function LoginPage() {
                         type={showPassword ? 'text' : 'password'}
                         value={password}
                         onChange={(e) => setPassword(e.target.value)}
-                        className="w-full h-[44px] pl-12 pr-12 bg-[#0B1220] border border-white/5 rounded-[12px] text-white placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all text-sm font-medium shadow-inner"
+                        className="w-full h-[44px] pl-12 pr-12 border rounded-[12px] placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-indigo-500/50 focus:border-indigo-500/50 transition-all text-sm font-medium shadow-inner"
+                        style={{ background: 'var(--hero-input-bg)', color: 'var(--hero-text)', borderColor: 'var(--hero-border)' }}
                         placeholder="••••••••"
                         required
                       />
@@ -262,7 +266,7 @@ export default function LoginPage() {
                       onChange={(e) => setRememberMe(e.target.checked)}
                       className="w-4 h-4 rounded-md border-white/10 bg-[#0B1220] text-indigo-500 focus:ring-indigo-500/50" 
                     />
-                    <label htmlFor="remember" className="text-sm text-slate-400 cursor-pointer select-none font-medium">Keep me signed in</label>
+                    <label htmlFor="remember" className="text-sm cursor-pointer select-none font-medium" style={{ color: 'var(--hero-text-muted)' }}>Keep me signed in</label>
                   </div>
                 </>
               ) : (
@@ -286,7 +290,7 @@ export default function LoginPage() {
 
               <button
                 type="submit"
-                disabled={loading || (!requires2FA && !selectedOrg)}
+                disabled={loading}
                 className="w-full h-[52px] bg-gradient-to-r from-[#6D5DFC] to-[#8B5CF6] hover:shadow-[0_8px_20px_rgba(109,93,252,0.3)] text-white font-black rounded-[12px] transition-all transform hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 group text-sm tracking-[0.1em] uppercase mt-8"
               >
                 {loading ? (
@@ -300,16 +304,16 @@ export default function LoginPage() {
               </button>
             </form>
 
-            <p className="mt-10 text-center text-slate-500 text-xs font-medium">
+            <p className="mt-10 text-center text-xs font-medium" style={{ color: 'var(--hero-text-muted)' }}>
               Don&apos;t have an organization? <Link href="/signup" className="text-indigo-400 hover:text-indigo-300 font-black tracking-wide">Create account</Link>
             </p>
-          </motion.div>
+          </div>
         </div>
       </section>
 
       {/* Landing Content */}
       <AboutSection />
       <PricingSection />
-    </main>
+    </div>
   );
 }

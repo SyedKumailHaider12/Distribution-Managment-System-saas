@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-export async function middleware(request: NextRequest) {
-  // Edge runtime does not support Prisma. 
+// Next.js 16+ uses "proxy" instead of "middleware"
+export async function proxy(request: NextRequest) {
+  // Edge runtime does not support Prisma.
   // Tenant resolution is handled via session cookies in src/lib/auth.ts
   return NextResponse.next();
 }

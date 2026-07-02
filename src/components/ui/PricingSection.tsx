@@ -2,7 +2,6 @@
 
 import React from 'react';
 import { Check, Zap } from 'lucide-react';
-import { motion } from 'framer-motion';
 
 const PLANS = [
   {
@@ -10,61 +9,57 @@ const PLANS = [
     price: "4,999",
     description: "Perfect for single pharmacies or small clinics.",
     features: ["Single Branch", "Basic Inventory", "Daily Reports", "Email Support"],
-    gradient: "from-slate-500 to-slate-700",
-    popular: false
+    popular: false,
   },
   {
     name: "Professional",
     price: "12,999",
     description: "Comprehensive solution for growing businesses.",
     features: ["Up to 3 Branches", "Advanced Batch Tracking", "HR & Payroll", "Priority Support"],
-    gradient: "from-indigo-600 to-purple-600",
-    popular: true
+    popular: true,
   },
   {
     name: "Enterprise",
     price: "Custom",
     description: "Full-scale ERP for large hospitals & distributions.",
     features: ["Unlimited Branches", "Custom Analytics", "Audit Log Expert", "Dedicated Account Manager"],
-    gradient: "from-amber-500 to-orange-600",
-    popular: false
-  }
+    popular: false,
+  },
 ];
 
 export const PricingSection = () => {
   return (
-    <div id="pricing" className="py-24 px-6 bg-slate-50 dark:bg-slate-900/50">
+    <div
+      id="pricing"
+      className="py-24 px-6 transition-colors duration-300"
+      style={{ background: 'var(--bg-primary)' }}
+    >
       <div className="max-w-7xl mx-auto text-center mb-16">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-sm font-bold mb-6"
+        <div
+          className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-indigo-500 text-sm font-bold mb-6 border border-indigo-500/20"
+          style={{ background: 'rgba(99,102,241,0.08)' }}
         >
           <Zap className="w-4 h-4 fill-current" />
           <span>7-Day Free Trial Available</span>
-        </motion.div>
-        <h2 className="text-4xl md:text-5xl font-black text-slate-900 dark:text-white mb-6 tracking-tight">
+        </div>
+        <h2 className="text-4xl md:text-5xl font-black mb-6 tracking-tight" style={{ color: 'var(--text-primary)' }}>
           Simple, Transparent Pricing
         </h2>
-        <p className="text-lg text-slate-600 dark:text-slate-400 max-w-2xl mx-auto">
+        <p className="text-lg max-w-2xl mx-auto" style={{ color: 'var(--text-secondary)' }}>
           Choose the plan that fits your organization. No hidden fees, cancel anytime.
         </p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-        {PLANS.map((plan, index) => (
-          <motion.div
+        {PLANS.map((plan) => (
+          <div
             key={plan.name}
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: index * 0.1 }}
-            className={`relative p-8 rounded-3xl border ${
-              plan.popular 
-                ? 'bg-white dark:bg-slate-800 border-indigo-200 dark:border-indigo-500/50 shadow-2xl scale-105 z-10' 
-                : 'bg-white/50 dark:bg-slate-800/50 border-slate-200 dark:border-slate-700 shadow-xl'
-            }`}
+            className={`relative p-8 rounded-3xl border shadow-xl transition-transform ${plan.popular ? 'scale-105 z-10' : ''}`}
+            style={{
+              background: 'var(--bg-card)',
+              borderColor: plan.popular ? 'rgba(99,102,241,0.5)' : 'rgba(99,102,241,0.12)',
+              boxShadow: plan.popular ? '0 20px 40px rgba(99,102,241,0.15)' : undefined,
+            }}
           >
             {plan.popular && (
               <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-indigo-600 text-white text-xs font-black uppercase tracking-widest rounded-full">
@@ -72,32 +67,49 @@ export const PricingSection = () => {
               </div>
             )}
             <div className="mb-8">
-              <h3 className="text-xl font-bold text-slate-900 dark:text-white mb-2">{plan.name}</h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400">{plan.description}</p>
+              <h3 className="text-xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
+                {plan.name}
+              </h3>
+              <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                {plan.description}
+              </p>
             </div>
             <div className="mb-8 flex items-baseline gap-1">
-              {plan.price !== "Custom" && <span className="text-slate-500 font-medium">Rs.</span>}
-              <span className="text-4xl font-black text-slate-900 dark:text-white">{plan.price}</span>
-              {plan.price !== "Custom" && <span className="text-slate-500 text-sm font-medium">/month</span>}
+              {plan.price !== "Custom" && (
+                <span className="font-medium" style={{ color: 'var(--text-secondary)' }}>Rs.</span>
+              )}
+              <span className="text-4xl font-black" style={{ color: 'var(--text-primary)' }}>
+                {plan.price}
+              </span>
+              {plan.price !== "Custom" && (
+                <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>/month</span>
+              )}
             </div>
             <ul className="space-y-4 mb-8">
-              {plan.features.map(feature => (
-                <li key={feature} className="flex items-center gap-3 text-sm text-slate-600 dark:text-slate-300 font-medium">
-                  <div className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/30 flex items-center justify-center text-emerald-600">
+              {plan.features.map((feature) => (
+                <li key={feature} className="flex items-center gap-3 text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+                  <div className="w-5 h-5 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 shrink-0">
                     <Check className="w-3 h-3" />
                   </div>
                   {feature}
                 </li>
               ))}
             </ul>
-            <button className={`w-full py-4 rounded-2xl font-bold transition-all transform active:scale-[0.98] ${
-              plan.popular 
-                ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/25' 
-                : 'bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-900 dark:text-white'
-            }`}>
+            <button
+              className={`w-full py-4 rounded-2xl font-bold transition-all transform active:scale-[0.98] ${
+                plan.popular
+                  ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/25'
+                  : 'hover:opacity-80'
+              }`}
+              style={
+                plan.popular
+                  ? undefined
+                  : { background: 'var(--bg-secondary)', color: 'var(--text-primary)' }
+              }
+            >
               Get Started
             </button>
-          </motion.div>
+          </div>
         ))}
       </div>
     </div>

@@ -9,10 +9,19 @@
   --color-primary-indigo: #6366F1;
   --color-primary-blue:   #3B82F6;
 
-  /* Animated Background */
+  /* Animated Background — dark defaults */
   --bg-anim-1: #0F172A;
   --bg-anim-2: #1E3A8A;
   --bg-anim-3: #0B1120;
+
+  /* Hero section colors */
+  --hero-bg: #050816;
+  --hero-left-bg: #0B1220;
+  --hero-card-bg: rgba(17,24,39,0.75);
+  --hero-input-bg: #0B1220;
+  --hero-border: rgba(255,255,255,0.1);
+  --hero-text: #ffffff;
+  --hero-text-muted: #94a3b8;
 
   /* Background layers */
   --bg-dark-1: #0B1120;
@@ -30,6 +39,18 @@
   --bg-card: rgba(22,27,38,0.8);
   --text-primary: #F9FAFB;
   --text-secondary: #D1D5DB;
+
+  --bg-anim-1: #0F172A;
+  --bg-anim-2: #1E3A8A;
+  --bg-anim-3: #0B1120;
+
+  --hero-bg: #050816;
+  --hero-left-bg: #0B1220;
+  --hero-card-bg: rgba(17,24,39,0.75);
+  --hero-input-bg: #0B1220;
+  --hero-border: rgba(255,255,255,0.1);
+  --hero-text: #ffffff;
+  --hero-text-muted: #94a3b8;
 }
 
 [data-theme='light'] {
@@ -38,6 +59,18 @@
   --bg-card: rgba(255,255,255,0.85);
   --text-primary: #111827;
   --text-secondary: #374151;
+
+  --bg-anim-1: #e0e7ff;
+  --bg-anim-2: #c7d2fe;
+  --bg-anim-3: #f0f4ff;
+
+  --hero-bg: #f8faff;
+  --hero-left-bg: #eef2ff;
+  --hero-card-bg: rgba(255,255,255,0.9);
+  --hero-input-bg: #f1f5f9;
+  --hero-border: rgba(99,102,241,0.2);
+  --hero-text: #111827;
+  --hero-text-muted: #64748b;
 }
 
 html, body {
@@ -50,14 +83,25 @@ html, body {
   overflow-x: hidden;
 }
 
-/* Full‑screen animated gradient background */
+/* Remove 300ms tap delay on all interactive elements — critical for mobile */
+a, button, input, select, textarea, [role="button"] {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Full‑screen animated gradient background — uses ::before so body stays in normal flow */
 .bg-animated {
+  position: relative;
+}
+.bg-animated::before {
+  content: '';
   position: fixed;
   inset: 0;
   z-index: -1;
   background: linear-gradient(135deg, var(--bg-anim-1), var(--bg-anim-2), var(--bg-anim-3));
   background-size: 300% 300%;
   animation: gradientMove 15s ease infinite;
+  pointer-events: none;
 }
 
 @keyframes gradientMove {
@@ -125,6 +169,16 @@ html, body {
 .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
 .scrollbar-hide::-webkit-scrollbar { display: none; }
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* Fade-in animation for page content — no framer-motion dependency */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(12px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.4s ease forwards;
+}
 
 /* Ensure Tailwind can purge the new classes */
 @layer utilities {

@@ -47,7 +47,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
     }
   }, [user, loading, router, isPublicPage, isBillingPage, isVerifyPage]);
 
-  if (loading && !isSuperAdminRoute) {
+  if (loading && !isSuperAdminRoute && !isPublicPage && !isVerifyPage) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
         <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
@@ -61,7 +61,7 @@ function LayoutContent({ children }: { children: React.ReactNode }) {
 
   if (isPublicPage) {
     return (
-      <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-slate-950">
+      <div className="flex flex-col min-h-screen" style={{ background: 'var(--hero-bg)' }}>
         <PublicHeader />
         <main className="flex-1">
           {children}

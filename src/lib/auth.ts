@@ -85,9 +85,12 @@ export async function createSession(user: SessionUser): Promise<void> {
   const sessionData = JSON.stringify(user);
   const encoded = Buffer.from(sessionData).toString('base64');
 
+  // secure:true only on production HTTPS — on local network (192.168.x.x) HTTP needs secure:false
+  const isProduction = process.env.NODE_ENV === 'production' && !process.env.ALLOW_HTTP_COOKIES;
+
   cookieStore.set(SESSION_COOKIE, encoded, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: isProduction,
     sameSite: 'lax',
     maxAge: 60 * 60 * 24 * 7, // 7 days
     path: '/',

@@ -52,7 +52,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    refresh();
+    // Safety timeout so loading never blocks forever on slow mobile networks
+    const timeout = setTimeout(() => {
+      setLoading(false);
+    }, 8000);
+
+    refresh().finally(() => clearTimeout(timeout));
   }, []);
 
   return (

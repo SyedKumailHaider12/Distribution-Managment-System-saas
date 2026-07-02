@@ -41,26 +41,25 @@ export function ThemeProvider({ children, initialTheme = 'dark' }: ThemeProvider
     }
   }, [initialTheme])
 
-  const toggleTheme = async () => {
+  const toggleTheme = () => {
     const newTheme = theme === 'light' ? 'dark' : 'light'
     setTheme(newTheme)
     localStorage.setItem('theme', newTheme)
     document.documentElement.setAttribute('data-theme', newTheme)
-    
-    try {
-      await saveOrganizationSettings({ theme: newTheme })
-    } catch (err) {
-      console.error("Failed to save theme setting:", err)
-    }
-  }
 
-  // Prevent flash of unstyled content or hydration mismatch
-  if (!isMounted) {
-    return <div style={{ visibility: 'hidden' }}>{children}</div>
+    // Save to DB in background — only if user is logged in (has a session)
+    // Don't await so the toggle is instant regardless of network
+    fetch('/api/auth/session', { cache: 'no-store' })
+      .then(res => {
+        if (res.ok) {
+          saveOrganizationSettings({ theme: newTheme }).catch(() => {})
+        }
+      })
+      .catch(() => {})
   }
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme, isLoading: false }}>
+    <ThemeContext.Provider value={{ theme, toggleTheme, isLoading: !isMounted }}>
       {children}
     </ThemeContext.Provider>
   )
